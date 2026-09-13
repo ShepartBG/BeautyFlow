@@ -1,0 +1,200 @@
+import { test, expect, Page } from "@playwright/test";
+import { settle, watchPage } from "./helpers";
+
+const MONTHS: Record<string, number> = {
+  "Януари": 1, "Февруари": 2, "Март": 3, "Април": 4,
+  "Май": 5, "Юни": 6, "Юли": 7, "Август": 8,
+  "Септември": 9, "Октомври": 10, "Ноември": 11, "Декември": 12,
+};
+
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+async function selectedBookingDate(page: Page): Promise<string> {
+  const heading = (await page.locator(".booking-calendar-head strong").textContent() || "").trim();
+  const [monthName, yearRaw] = heading.split(/\s+/);
+  const month = MONTHS[monthName];
+  const year = Number(yearRaw);
+  const day = Number(
+    (await page.locator(".booking-calendar-grid button.selected span").first().textContent() || "").trim()
+  );
+  if (!year || !month || !day) throw new Error(`Не успях да разчета избраната дата: ${heading}`);
+  return `${year}-${pad(month)}-${pad(day)}`;
+}
+
+async function chooseAdminDate(page: Page, iso: string) {
+  const [targetYear, targetMonth, targetDay] = iso.split("-").map(Number);
+
+  await page.locator(".admin-date-trigger").click();
+
+  for (let i = 0; i < 30; i++) {
+    const heading = (await page.locator(".admin-date-head strong").textContent() || "").trim();
+    const [monthName, yearRaw] = heading.split(/\s+/);
+    const currentMonth = MONTHS[monthName];
+    const currentYear = Number(yearRaw);
+
+    if (currentYear === targetYear && currentMonth === targetMonth) break;
+
+    const currentIndex = currentYear * 12 + currentMonth;
+    const targetIndex = targetYear * 12 + targetMonth;
+    const buttons = page.locator(".admin-date-head button");
+    await (targetIndex > currentIndex ? buttons.last() : buttons.first()).click();
+  }
+
+  const dayButton = page.locator(".admin-date-grid button").filter({
+    has: page.locator("b", { hasText: new RegExp(`^${targetDay}$`) }),
+  }).first();
+
+  await expect(dayButton, `Не намерих ${iso} в admin календара.`).toBeVisible();
+  await dayButton.click();
+  await page.waitForTimeout(900);
+}
+
+test("real booking -> admin verification -> delete -> slot is free again", async ({ page }) => {
+  const slug = process.env.TEST_SALON_SLUG?.trim();
+  if (!slug) {
+    throw new Error("Добави TEST_SALON_SLUG в .env.test.local.");
+  }
+
+  const verify = watchPage(page);
+
+  // Unique test identity avoids the 90-second / 3-bookings anti-troll rules.
+  const stamp = Date.now().toString();
+  const customerName = `E2E BeautyFlow ${stamp.slice(-6)}`;
+  const customerPhone = `089${stamp.slice(-7)}`;
+  const note = `AUTOMATED E2E TEST ${stamp}`;
+
+  // ---- CLIENT SIDE: create a real booking ----
+  await page.goto(`/salon/${encodeURIComponent(slug)}`);
+  await settle(page);
+
+  const serviceSelect = page.locator(".booking-box form select").first();
+  await expect(serviceSelect).toBeVisible();
+
+  const serviceCount = await serviceSelect.locator("option").count();
+  expect(serviceCount, "Няма активна услуга за E2E тест.").toBeGreaterThan(1);
+
+  await serviceSelect.selectOption({ index: 1 });
+  const selectedServiceText = (
+    await serviceSelect.locator("option:checked").textContent() || ""
+  ).trim();
+  const serviceName = selectedServiceText.split("·")[0].trim();
+
+  let availableDay = page.locator(
+    ".booking-calendar-grid button.day-available:not([disabled])"
+  ).first();
+
+  for (let i = 0; i < 6; i++) {
+    await page.waitForTimeout(900);
+    if (await availableDay.isVisible().catch(() => false)) break;
+
+    const next = page.locator(".booking-calendar-head button").last();
+    if (!(await next.isEnabled().catch(() => false))) break;
+    await next.click();
+  }
+
+  await expect(
+    availableDay,
+    "Не беше намерен свободен работен ден в следващите 6 месеца."
+  ).toBeVisible();
+
+  await availableDay.click();
+  const appointmentDate = await selectedBookingDate(page);
+
+  const freeSlot = page.locator(
+    ".timeline-grid button.available:not([disabled])"
+  ).first();
+  await expect(freeSlot, "Не беше намерен свободен час.").toBeVisible({ timeout: 15_000 });
+
+  const appointmentTime = (
+    await freeSlot.locator("b").textContent() || ""
+  ).trim();
+  await freeSlot.click();
+
+  await page.locator('input[name="customerName"]').fill(customerName);
+  await page.locator('input[name="customerPhone"]').fill(customerPhone);
+  await page.locator('textarea[name="note"]').fill(note);
+  await page.locator('input[name="acceptedTerms"]').check();
+
+  await page.getByRole("button", { name: new RegExp(`Потвърди час\\s+${appointmentTime}`) }).click();
+
+  await expect(page.locator(".booking-success")).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator(".booking-success")).toContainText(customerName).catch(() => {});
+  await expect(page.locator(".booking-success")).toContainText(serviceName);
+  await expect(page.locator(".booking-success")).toContainText(appointmentTime);
+
+  // ---- ADMIN SIDE: verify the same appointment is visible ----
+  await page.goto("/admin/bookings");
+  await settle(page);
+  await chooseAdminDate(page, appointmentDate);
+
+  const row = page.locator(".booking-row").filter({ hasText: customerName }).first();
+  await expect(row, "Новото записване не се появи в Admin → Записвания.").toBeVisible({ timeout: 12_000 });
+  await expect(row).toContainText(serviceName);
+  await expect(row).toContainText(appointmentTime);
+  await expect(row).toContainText(customerPhone);
+  await expect(row).toContainText("Подробности");
+
+  // Also verify the daily calendar sees the booking.
+  await page.goto("/admin/calendar");
+  await settle(page);
+  await chooseAdminDate(page, appointmentDate);
+
+  const calendarAppointment = page.locator(".calendar-appointment").filter({ hasText: customerName }).first();
+  await expect(
+    calendarAppointment,
+    "Новото записване не се появи в Admin → Календар."
+  ).toBeVisible({ timeout: 12_000 });
+  await expect(calendarAppointment).toContainText(serviceName);
+  await expect(calendarAppointment).toContainText(appointmentTime);
+
+  // ---- ADMIN SIDE: delete it and free the slot ----
+  page.once("dialog", async (dialog) => {
+    expect(dialog.type()).toBe("confirm");
+    await dialog.accept();
+  });
+
+  await calendarAppointment.getByRole("button", { name: "Изтрий часа" }).click();
+  await expect(calendarAppointment).toHaveCount(0, { timeout: 12_000 });
+
+  // ---- CLIENT SIDE: confirm the same date/time becomes available again ----
+  await page.goto(`/salon/${encodeURIComponent(slug)}`);
+  await settle(page);
+
+  const serviceAgain = page.locator(".booking-box form select").first();
+  await serviceAgain.selectOption({ index: 1 });
+
+  // Move public calendar to the appointment month.
+  const [targetYear, targetMonth, targetDay] = appointmentDate.split("-").map(Number);
+  for (let i = 0; i < 30; i++) {
+    await page.waitForTimeout(400);
+    const heading = (await page.locator(".booking-calendar-head strong").textContent() || "").trim();
+    const [monthName, yearRaw] = heading.split(/\s+/);
+    const currentMonth = MONTHS[monthName];
+    const currentYear = Number(yearRaw);
+    if (currentYear === targetYear && currentMonth === targetMonth) break;
+
+    const currentIndex = currentYear * 12 + currentMonth;
+    const targetIndex = targetYear * 12 + targetMonth;
+    const buttons = page.locator(".booking-calendar-head button");
+    await (targetIndex > currentIndex ? buttons.last() : buttons.first()).click();
+  }
+
+  const targetDayButton = page.locator(".booking-calendar-grid button").filter({
+    has: page.locator("span", { hasText: new RegExp(`^${targetDay}$`) }),
+  }).first();
+  await expect(targetDayButton).toBeEnabled();
+  await targetDayButton.click();
+
+  const restoredSlot = page.locator(".timeline-grid button.available").filter({
+    has: page.locator("b", { hasText: new RegExp(`^${appointmentTime}$`) }),
+  }).first();
+
+  await expect(
+    restoredSlot,
+    "След изтриването часът не се освободи отново за клиента."
+  ).toBeVisible({ timeout: 15_000 });
+
+  await verify();
+});

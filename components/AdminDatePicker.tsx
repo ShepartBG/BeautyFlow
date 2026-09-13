@@ -1,0 +1,20 @@
+"use client";
+import {useEffect,useMemo,useRef,useState} from "react";
+import {createPortal} from "react-dom";
+import {bulgarianHolidays} from "@/lib/beautyflow/bulgarianHolidays";
+const MONTHS=["Януари","Февруари","Март","Април","Май","Юни","Юли","Август","Септември","Октомври","Ноември","Декември"];
+const DAYS=["Пн","Вт","Ср","Чт","Пт","Сб","Нд"];
+function parse(v:string){const [y,m,d]=v.split("-").map(Number);return new Date(y,m-1,d)}
+function iso(y:number,m:number,d:number){return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`}
+function label(v:string){const d=parse(v);return `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()} · ${DAYS[(d.getDay()+6)%7]}`}
+export default function AdminDatePicker({value,onChange,className=""}:{value:string;onChange:(v:string)=>void;className?:string}){
+ const selected=parse(value);const[open,setOpen]=useState(false);const[view,setView]=useState(()=>new Date(selected.getFullYear(),selected.getMonth(),1));const ref=useRef<HTMLDivElement>(null);const triggerRef=useRef<HTMLButtonElement>(null);const[floatPos,setFloatPos]=useState({left:0,top:0,desktop:false});
+ useEffect(()=>{setView(new Date(selected.getFullYear(),selected.getMonth(),1))},[value]);
+ useEffect(()=>{function close(e:MouseEvent){if(ref.current&&!ref.current.contains(e.target as Node))setOpen(false)}document.addEventListener("mousedown",close);return()=>document.removeEventListener("mousedown",close)},[]);
+ useEffect(()=>{if(!open)return;const place=()=>{const btn=triggerRef.current;if(!btn)return;const desktop=window.innerWidth>=901;if(!desktop){setFloatPos(v=>({...v,desktop:false}));return}const r=btn.getBoundingClientRect(),w=336,gap=8,pad=12;let left=Math.min(Math.max(pad,r.left),window.innerWidth-w-pad);let top=r.bottom+gap;const estimatedHeight=390;if(top+estimatedHeight>window.innerHeight-pad)top=Math.max(pad,r.top-estimatedHeight-gap);setFloatPos({left,top,desktop:true})};place();window.addEventListener("resize",place);window.addEventListener("scroll",place,true);return()=>{window.removeEventListener("resize",place);window.removeEventListener("scroll",place,true)}},[open]);
+ const holidays=useMemo(()=>bulgarianHolidays(view.getFullYear()),[view]);
+ const cells=useMemo(()=>{const first=new Date(view.getFullYear(),view.getMonth(),1),last=new Date(view.getFullYear(),view.getMonth()+1,0),pad=(first.getDay()+6)%7,out:(number|null)[]=[];for(let i=0;i<pad;i++)out.push(null);for(let d=1;d<=last.getDate();d++)out.push(d);while(out.length%7)out.push(null);return out},[view]);
+ const floatStyle=floatPos.desktop?({left:`${floatPos.left}px`,top:`${floatPos.top}px`} as React.CSSProperties):undefined;
+ const calendar=open&&<div style={floatStyle} className={`admin-date-popover ${floatPos.desktop?"bf-desktop-portal":""}`}><div className="admin-date-head"><button type="button" onClick={()=>setView(v=>new Date(v.getFullYear(),v.getMonth()-1,1))}>←</button><strong>{MONTHS[view.getMonth()]} {view.getFullYear()}</strong><button type="button" onClick={()=>setView(v=>new Date(v.getFullYear(),v.getMonth()+1,1))}>→</button></div><div className="admin-date-week">{DAYS.map(x=><span key={x}>{x}</span>)}</div><div className="admin-date-grid">{cells.map((d,i)=>{if(d===null)return <span key={`empty-${view.getFullYear()}-${view.getMonth()}-${i}`}/>;const dateIso=iso(view.getFullYear(),view.getMonth(),d),holiday=holidays[dateIso];return <button type="button" key={`day-${view.getFullYear()}-${view.getMonth()}-${d}`} title={holiday?.name||""} className={`${value===dateIso?"selected ":""}${holiday?"admin-holiday":""}`} onClick={()=>{onChange(dateIso);setOpen(false)}}><b>{d}</b>{holiday&&<small>{holiday.short}</small>}</button>})}</div></div>;
+ return <div ref={ref} className={`admin-date-picker ${className}`.trim()}><button ref={triggerRef} type="button" className="admin-date-trigger" onClick={()=>setOpen(v=>!v)}><span>📅</span><b>{label(value)}</b><i>▾</i></button>{open&&(floatPos.desktop?createPortal(calendar,document.body):calendar)}</div>
+}

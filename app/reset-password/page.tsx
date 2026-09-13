@@ -1,0 +1,12 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import PublicNav from "@/components/PublicNav";
+import { supabase } from "@/lib/supabase";
+
+export default function Reset(){
+ const router=useRouter(); const [ready,setReady]=useState(false); const [busy,setBusy]=useState(false); const [message,setMessage]=useState("");
+ useEffect(()=>{(async()=>{await new Promise(r=>setTimeout(r,250));const {data}=await supabase.auth.getSession();setReady(Boolean(data.session));if(!data.session)setMessage("Отвори тази страница от линка в email-а за задаване на парола.");})();},[]);
+ async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setMessage("");const f=new FormData(e.currentTarget);const password=String(f.get("password")||"");const confirm=String(f.get("confirm")||"");if(password.length<8){setMessage("Паролата трябва да е поне 8 символа.");setBusy(false);return;}if(password!==confirm){setMessage("Паролите не съвпадат.");setBusy(false);return;}const {error}=await supabase.auth.updateUser({password});if(error){setMessage(error.message);setBusy(false);return;}setMessage("Паролата е зададена успешно. Пренасочване към вход...");setTimeout(()=>router.replace("/login"),900);}
+ return <main className="page"><div className="bg-hero"/><div className="bg-soft"/><PublicNav/><section className="form-wrap"><div className="form-card"><div className="badge">НОВА ПАРОЛА</div><h1>Задай парола</h1><p style={{color:"var(--muted)",fontWeight:600}}>След одобрение на бизнеса създай своята парола за BeautyFlow.</p><form onSubmit={submit}><div className="field"><label>Нова парола</label><input name="password" type="password" minLength={8} required disabled={!ready}/></div><div className="field"><label>Повтори паролата</label><input name="confirm" type="password" minLength={8} required disabled={!ready}/></div><button className="btn btn-primary" disabled={!ready||busy}>{busy?"Запазване...":"Запази паролата"}</button>{message&&<p className="form-message">{message}</p>}</form></div></section></main>
+}
