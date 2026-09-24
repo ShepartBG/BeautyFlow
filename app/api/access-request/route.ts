@@ -75,11 +75,12 @@ export async function POST(req: Request) {
     const ownerEmail =
       process.env.BEAUTYFLOW_OWNER_EMAIL || "battlebooking@abv.bg";
 
+    const e2e = process.env.NODE_ENV !== "production" && process.env.BEAUTYFLOW_E2E_MODE === "1";
     const requesterTemplate=requestReceivedEmail({ownerName,businessName});
-    const requesterResult = await sendBeautyFlowEmail({to:email,...requesterTemplate});
+    const requesterResult = e2e ? { ok: true } : await sendBeautyFlowEmail({to:email,...requesterTemplate});
 
     const ownerTemplate=newRequestOwnerEmail({ownerName,businessName,email,phone,city,category});
-    const ownerResult = await sendBeautyFlowEmail({to:ownerEmail,...ownerTemplate});
+    const ownerResult = e2e ? { ok: true } : await sendBeautyFlowEmail({to:ownerEmail,...ownerTemplate});
 
     const bothSent = requesterResult.ok && ownerResult.ok;
     let resultMessage = "Заявката е изпратена успешно. Изпратихме потвърждение на email-а Ви.";

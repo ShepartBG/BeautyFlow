@@ -12,7 +12,19 @@
     "test:browser:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts --project=chromium --headed",
     "test:browser:mobile": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts --project=mobile",
     "test:browser:report": "playwright show-report",
-    "test:browser:full:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/booking-full.spec.ts --project=chromium --headed"
+    "test:browser:full:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/booking-full.spec.ts --project=chromium --headed",
+    "test:browser:waitlist": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/waitlist-full.spec.ts --project=chromium",
+    "test:browser:waitlist:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/waitlist-full.spec.ts --project=chromium --headed",
+    "test:browser:all": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium",
+    "test:browser:all:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium --headed",
+    "test:browser:functions": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/functional-smoke.spec.ts --project=chromium",
+    "test:browser:functions:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/functional-smoke.spec.ts --project=chromium --headed",
+    "test:release": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts tests/functional-smoke.spec.ts --project=chromium",
+    "test:release:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts tests/functional-smoke.spec.ts --project=chromium --headed",
+    "test:production:safe": "node ./node_modules/@playwright/test/cli.js test tests/production-safe.spec.ts --project=chromium",
+    "test:production:safe:headed": "node ./node_modules/@playwright/test/cli.js test tests/production-safe.spec.ts --project=chromium --headed",
+    "test:az": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/az-lifecycle.spec.ts tests/admin.spec.ts tests/public.spec.ts tests/functional-smoke.spec.ts tests/booking-flow.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium",
+    "test:az:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/az-lifecycle.spec.ts tests/admin.spec.ts tests/public.spec.ts tests/functional-smoke.spec.ts tests/booking-flow.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium --headed"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.108.2",

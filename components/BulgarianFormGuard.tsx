@@ -57,9 +57,15 @@ function applyDefaultLimits(root: ParentNode = document) {
 
 export default function BulgarianFormGuard() {
   useEffect(() => {
-    applyDefaultLimits();
-    const observer = new MutationObserver(() => applyDefaultLimits());
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Do not mutate form attributes while React is still hydrating streamed/client pages.
+    // Changing maxLength before a page finishes hydration makes the server DOM differ
+    // from the client tree (login / forgot-password / register-salon).
+    let observer: MutationObserver | null = null;
+    const limitsTimer = window.setTimeout(() => {
+      applyDefaultLimits();
+      observer = new MutationObserver(() => applyDefaultLimits());
+      observer.observe(document.body, { childList: true, subtree: true });
+    }, 1000);
     let focused=false;
     const onInvalid = (event: Event) => {
       const el = event.target;
@@ -74,7 +80,7 @@ export default function BulgarianFormGuard() {
     document.addEventListener("invalid", onInvalid, true);
     document.addEventListener("input", clear, true);
     document.addEventListener("change", clear, true);
-    return () => {observer.disconnect();document.removeEventListener("invalid", onInvalid, true);document.removeEventListener("input", clear, true);document.removeEventListener("change", clear, true)};
+    return () => {window.clearTimeout(limitsTimer);observer?.disconnect();document.removeEventListener("invalid", onInvalid, true);document.removeEventListener("input", clear, true);document.removeEventListener("change", clear, true)};
   }, []);
   return null;
 }

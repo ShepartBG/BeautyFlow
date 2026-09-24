@@ -6,11 +6,14 @@ const publicRoutes = [
   "/about",
   "/contact",
   "/cookies",
+  "/discover",
+  "/forgot-password",
   "/how-it-works",
   "/login",
   "/privacy",
   "/register-salon",
   "/salons",
+  "/specialists",
   "/terms",
 ];
 

@@ -6,6 +6,8 @@ const adminRoutes = [
   "/admin/bookings",
   "/admin/calendar",
   "/admin/customers",
+  "/admin/my-profile",
+  "/admin/waitlist",
   "/admin/schedule",
   "/admin/services",
   "/admin/settings",

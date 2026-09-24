@@ -23,7 +23,10 @@ export async function POST(req:Request){
   }
 
   let userId:string|undefined;
-  const tempPassword=crypto.randomBytes(24).toString("base64url")+"A1!";
+  const e2e = process.env.NODE_ENV !== "production" && process.env.BEAUTYFLOW_E2E_MODE === "1";
+  const tempPassword = e2e && process.env.TEST_NEW_ADMIN_PASSWORD
+    ? process.env.TEST_NEW_ADMIN_PASSWORD
+    : crypto.randomBytes(24).toString("base64url")+"A1!";
   const created=await auth.admin.auth.admin.createUser({email:r.email,password:tempPassword,email_confirm:true,user_metadata:{owner_name:r.owner_name}});
   if(created.data.user)userId=created.data.user.id;
   if(!userId){const users=await auth.admin.auth.admin.listUsers({page:1,perPage:1000});userId=users.data.users.find((u:any)=>u.email?.toLowerCase()===String(r.email).toLowerCase())?.id;}
@@ -47,7 +50,7 @@ export async function POST(req:Request){
   const link=await auth.admin.auth.admin.generateLink({type:"recovery",email:r.email,options:{redirectTo:`${site}/reset-password`}});
   if(link.error)throw new Error(`Не успях да генерирам линк за парола: ${link.error.message}`);
   const resetUrl=link.data.properties?.action_link||`${site}/forgot-password`;
-  const mail=await sendBeautyFlowEmail({to:r.email,...approvedEmail({ownerName:r.owner_name,businessName:r.business_name,resetUrl})});
+  const mail = e2e ? { ok: true, message: "E2E: email изпращането е пропуснато." } : await sendBeautyFlowEmail({to:r.email,...approvedEmail({ownerName:r.owner_name,businessName:r.business_name,resetUrl})});
 
   if(!mail.ok){
     return NextResponse.json({ok:true,emailSent:false,setupUrl:resetUrl,message:`Салонът е одобрен, но email НЕ е изпратен: ${mail.message}. Линкът за парола е показан отдолу, за да може да го тестваш ръчно.`});
