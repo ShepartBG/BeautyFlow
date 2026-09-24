@@ -9,7 +9,7 @@ const categories = [
   { title: "Фризьорски салони", image: "/brand/bf-cat-hair.jpg", category: "hair" },
   { title: "Барбър", image: "/brand/bf-cat-barber.jpg", category: "barber" },
   { title: "Маникюр", image: "/brand/bf-cat-nails.jpg", category: "nails" },
-  { title: "Мигли", image: "/brand/bf-cat-lashes.jpg", category: "lashes" },
+  { title: "Миглопластика", image: "/brand/bf-cat-lashes.jpg", category: "lashes" },
   { title: "Масажи", image: "/brand/bf-cat-massage.jpg", category: "massage" },
   { title: "Други услуги", image: "/brand/bf-cat-other.jpg", category: "other" },
 ];
@@ -32,7 +32,7 @@ const appointments = [
  ["Иван Петров","Подстрижка","24 май, 16:30","30 лв.","0888 123 456"],
  ["Георги Иванов","Скъсяване + брада","25 май, 11:00","40 лв.","0899 654 321"],
  ["Мария Николова","Маникюр с гел лак","26 май, 14:00","45 лв.","0877 987 654"],
- ["Елена Стоянова","Мигли – обемни","27 май, 10:30","60 лв.","0886 111 222"],
+ ["Елена Стоянова","Миглопластика – обемни","27 май, 10:30","60 лв.","0886 111 222"],
 ];
 
 const realPhotos = {
@@ -100,7 +100,7 @@ export default function Home(){return <main className="page bf-public-page bf-v2
 
 <section className="bf-home-photo-band bf-cinematic-section">
   <div className="bf-home-photo-main"><img src={realPhotos.hair} alt="Фризьор и клиент в салон"/><div><span>ЗА ПРОФЕСИОНАЛИСТИТЕ</span><h2>BeautyFlow остава на заден план. Работата ти е отпред.</h2><p>Идеята е технологията да подрежда деня, без да се превръща в още една сложна система за обслужване.</p></div></div>
-  <div className="bf-home-photo-side"><img src={realPhotos.massage} alt="Професионална масажна терапия"/><div><b>Различни услуги. Един начин за организация.</b><span>Фризьор, барбър, маникюр, мигли, масаж, козметика и още.</span></div></div>
+  <div className="bf-home-photo-side"><img src={realPhotos.massage} alt="Професионална масажна терапия"/><div><b>Различни услуги. Един начин за организация.</b><span>Фризьор, барбър, маникюр, миглопластика, масаж, козметика и още.</span></div></div>
 </section>
 
 

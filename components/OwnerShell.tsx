@@ -5,7 +5,7 @@ import { usePathname,useRouter } from "next/navigation";
 import OwnerGuard from "@/components/auth/OwnerGuard";
 import { supabase } from "@/lib/supabase";
 
-const ownerItems=[["/owner","Обзор"],["/owner/requests","Заявки"],["/owner/businesses","Бизнеси"]];
+const ownerItems=[["/owner","Обзор"],["/owner/requests","Заявки"],["/owner/businesses","Бизнеси"],["/owner/content","Магазини · Събития · Курсове"]];
 const publicItems=[["/","Начална страница"],["/salons","Салони"],["/specialists","Специалисти"],["/how-it-works","Как работи"],["/about","За нас"],["/contact","Контакти"],["/register-salon","Заяви достъп"]];
 export default function OwnerShell({children}:{children:React.ReactNode}){
  const p=usePathname();const r=useRouter();const[open,setOpen]=useState(false);const ref=useRef<HTMLDivElement>(null);

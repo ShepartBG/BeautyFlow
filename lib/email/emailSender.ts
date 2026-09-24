@@ -15,7 +15,7 @@ export type SendEmailResult = {
 };
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
-const DEFAULT_FROM = "BeautyFlow <noreply@battlebooking.bg>";
+const DEFAULT_FROM = "BeautyFlow <noreply@beautyflow.bg>";
 const DEFAULT_REPLY_TO = "battlebooking@abv.bg";
 
 export async function sendBeautyFlowEmail({
@@ -35,7 +35,8 @@ export async function sendBeautyFlowEmail({
     };
   }
 
-  const from = process.env.RESEND_FROM_EMAIL || process.env.BEAUTYFLOW_EMAIL_FROM || DEFAULT_FROM;
+  // BeautyFlow always sends from the verified BeautyFlow domain. Old local/Vercel env values must not override the brand sender.
+  const from = DEFAULT_FROM;
   const replyTo = process.env.BEAUTYFLOW_EMAIL_REPLY_TO || process.env.BEAUTYFLOW_OWNER_EMAIL || DEFAULT_REPLY_TO;
 
   const response = await fetch(RESEND_ENDPOINT, {

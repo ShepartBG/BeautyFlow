@@ -2,7 +2,7 @@ export const BEAUTY_CATEGORIES = [
   { value: "barber", label: "Барбър" },
   { value: "hair", label: "Фризьорски салон" },
   { value: "nails", label: "Маникюр" },
-  { value: "lashes", label: "Мигли" },
+  { value: "lashes", label: "Миглопластика" },
   { value: "makeup", label: "Грим" },
   { value: "massage", label: "Масажи" },
   { value: "cosmetics", label: "Козметика" },

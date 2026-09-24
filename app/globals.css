@@ -4621,3 +4621,115 @@ input.bf-invalid-field,textarea.bf-invalid-field,select.bf-invalid-field{border-
   .bf-staff-public-v266>div{padding:14px!important;}
   .bf-staff-bio-text{font-size:12px!important;line-height:1.5!important;}
 }
+
+/* BeautyFlow v2.78 — additive upgrade styles */
+.bf-service-manage-row{grid-template-columns:62px minmax(0,1fr) auto auto!important}.bf-service-manage-row>img,.bf-service-image-empty{width:54px;height:54px;border-radius:14px;object-fit:cover;background:#eee8f2;display:grid;place-items:center}.bf-service-image-change{display:inline-flex;margin-top:5px;font-size:11px;font-weight:800;color:#68459a;cursor:pointer}.bf-service-image-change input{display:none}.service-public-card.has-image{display:grid!important;grid-template-columns:64px 1fr auto!important;gap:12px!important}.bf-service-public-image{width:64px;height:54px;object-fit:cover;border-radius:12px}.bf-email-verify{display:flex;align-items:center;gap:10px;margin:-5px 0 12px}.bf-email-verify small{color:#665a70}.bf-no-slots-wrap{display:grid;gap:10px}.bf-waitlist-public{border:1px solid rgba(101,69,142,.18);background:rgba(247,242,251,.72);border-radius:16px;padding:14px}.bf-waitlist-public h3{margin:0 0 5px}.bf-waitlist-public p{font-size:12px;color:var(--muted)}.bf-waitlist-admin{display:grid;gap:12px}.bf-waitlist-admin>article{border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px}.bf-waitlist-admin>article>div:first-child{display:flex;flex-direction:column;gap:4px}.bf-waitlist-admin small{color:var(--muted)}.bf-waitlist-actions{display:flex;gap:8px;flex-wrap:wrap}.bf-waitlist-actions input{border:1px solid var(--line);border-radius:12px;padding:10px}.bf-waitlist-slots{display:flex;gap:7px;flex-wrap:wrap}.bf-waitlist-slots button{border:1px solid #bda8d3;background:#f6f0fb;color:#513773;border-radius:10px;padding:8px 10px;font-weight:800;cursor:pointer}.owner-content-editor{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:18px}.owner-content-list{display:grid;gap:10px}.owner-content-list article{display:grid;grid-template-columns:70px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:15px;padding:10px}.owner-content-list img{width:70px;height:58px;object-fit:cover;border-radius:10px}.owner-content-list article>div{display:flex;flex-direction:column;gap:3px}.owner-content-list article span{font-size:10px;font-weight:900;color:#7250a2}.owner-category-request{display:flex!important;align-items:center;gap:8px;flex-wrap:wrap}.bf-discover-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.bf-discover-grid article{overflow:hidden;border-radius:22px;background:rgba(255,255,255,.9);border:1px solid var(--line);box-shadow:0 12px 35px rgba(45,31,55,.07)}.bf-discover-grid img{width:100%;aspect-ratio:16/9;object-fit:cover}.bf-discover-grid article>div{padding:18px;display:flex;flex-direction:column;gap:8px}.bf-discover-grid h2,.bf-discover-grid p{margin:0}.bf-discover-grid p{color:var(--muted);line-height:1.55}.bf-discover-grid small{display:block}.bf-discover-grid a{align-self:flex-start;margin-top:6px}
+@media(max-width:820px){
+  /* Keep the platform artwork at a desktop-like scale instead of enlarging it to fill a narrow phone viewport. */
+  .page::before,.bf-public-page::before{background-size:1440px auto,cover!important;background-position:center top,center!important}
+  .owner-content-editor{grid-template-columns:1fr}.bf-discover-grid{grid-template-columns:1fr}.service-public-card.has-image{grid-template-columns:54px 1fr auto!important}.bf-service-public-image{width:54px;height:50px}.bf-service-manage-row{grid-template-columns:52px minmax(0,1fr)!important}.bf-service-manage-row>button{grid-row:2}.bf-email-verify{align-items:flex-start;flex-direction:column}
+}
+
+/* =====================================================================
+   BeautyFlow v2.79 — mobile canvas, service visuals, booking verification
+   ===================================================================== */
+/* Service photos must actually show the work being offered. */
+.service-public-card.has-image{grid-template-columns:132px minmax(0,1fr) auto!important;min-height:104px!important;align-items:center!important}
+.bf-service-public-image{width:132px!important;height:92px!important;border-radius:15px!important;object-fit:cover!important;box-shadow:0 8px 22px rgba(37,27,50,.14)!important}
+.bf-service-manage-row{grid-template-columns:104px minmax(0,1fr) auto auto!important;align-items:center!important}
+.bf-service-manage-row>img,.bf-service-image-empty{width:96px!important;height:78px!important;border-radius:15px!important;object-fit:cover!important}
+
+/* Every new action follows the graphite/violet BeautyFlow language. */
+.bf-waitlist-public .btn,.bf-waitlist-actions button,.bf-waitlist-slots button,.owner-category-request button,.owner-content-editor button,.bf-email-verify .btn,.bf-booking-code-card .btn{
+  border:1px solid rgba(139,107,211,.52)!important;color:#fff!important;background:linear-gradient(145deg,#373847 0%,#242633 58%,#5b3b91 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 20px rgba(27,24,40,.18)!important;font-weight:850!important
+}
+.bf-waitlist-public{background:linear-gradient(145deg,rgba(43,43,58,.94),rgba(75,49,105,.90))!important;border-color:rgba(166,128,225,.42)!important;color:#fff!important}.bf-waitlist-public p{color:#ded5e8!important}
+
+/* Mobile: never crop/zoom the owner's global canvas. The whole image width is kept. */
+@media(max-width:820px){
+ html,body{background-color:#1d1e29!important}
+ body{background-image:var(--bf-global-bg-image)!important;background-size:100% auto!important;background-position:center top!important;background-repeat:repeat-y!important;background-attachment:scroll!important}
+ .service-public-card.has-image{grid-template-columns:104px minmax(0,1fr) auto!important;min-height:92px!important}
+ .bf-service-public-image{width:104px!important;height:78px!important}
+ .bf-service-manage-row{grid-template-columns:86px minmax(0,1fr)!important}.bf-service-manage-row>img,.bf-service-image-empty{width:80px!important;height:70px!important}
+}
+
+/* Two-step booking: first submit details, then verify email in a focused modal. */
+.bf-booking-code-modal{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:18px;background:rgba(12,12,19,.76);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.bf-booking-code-card{width:min(470px,100%);display:grid;gap:14px;padding:28px;border-radius:25px;color:#f8f4fb;background:linear-gradient(145deg,#30313f 0%,#20212d 58%,#4a2d69 100%);border:1px solid rgba(180,143,234,.46);box-shadow:0 30px 90px rgba(0,0,0,.42)}
+.bf-booking-code-card h2,.bf-booking-code-card p{margin:0}.bf-booking-code-card p{color:#ded6e7;line-height:1.6}.bf-booking-code-card input{width:100%;min-height:62px;border-radius:16px;border:1px solid rgba(190,154,239,.55);background:rgba(255,255,255,.10);color:#fff;text-align:center;font-size:28px;font-weight:900;letter-spacing:.28em;outline:none}.bf-booking-code-card input:focus{border-color:#c29af3;box-shadow:0 0 0 4px rgba(155,103,220,.18)}.bf-code-message{color:#dcd0e7;line-height:1.45}.bf-modal-cancel{border:0;background:transparent;color:#d8c9e7;text-decoration:underline;cursor:pointer;font-weight:750}
+
+/* =====================================================================
+   BeautyFlow v2.80 — regression repair + contrast + Bulgarian controls
+   ===================================================================== */
+/* Loader uses a unique filename copied from the exact approved purple nav logo. */
+.bf-loader-exact-logo{filter:none!important;mix-blend-mode:normal!important;opacity:1!important}
+
+/* Restore the APPROVED mobile navigation on Home too. v2.76 had a later flat override. */
+@media(max-width:820px){
+ .bf-v230-home .nav.bf-public-nav-v257 .nav-links.is-open,
+ .bf-home-refined .nav.bf-public-nav-v257 .nav-links.is-open{
+  background:linear-gradient(155deg,rgba(39,40,54,.99),rgba(26,27,38,.99) 62%,rgba(57,40,81,.99))!important;
+  border:1px solid rgba(151,119,220,.70)!important;box-shadow:0 22px 55px rgba(15,13,25,.38),inset 0 1px 0 rgba(255,255,255,.10)!important;padding:10px!important
+ }
+ .bf-v230-home .nav.bf-public-nav-v257 .nav-links.is-open>a,
+ .bf-home-refined .nav.bf-public-nav-v257 .nav-links.is-open>a{
+  min-height:46px!important;margin:4px 0!important;padding:0 15px!important;border-radius:12px!important;
+  color:#fff!important;background:linear-gradient(145deg,#3d4050,#242633 60%,#573884)!important;
+  border:1px solid rgba(151,119,220,.62)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 6px 14px rgba(24,22,36,.18)!important
+ }
+}
+
+/* Discover is part of the same graphite/violet product — not a white legacy island. */
+.page .directory-hero{background:linear-gradient(145deg,rgba(38,38,52,.96),rgba(31,30,43,.94) 58%,rgba(69,43,96,.94))!important;border-bottom:1px solid rgba(159,123,220,.42)!important;color:#fff!important}
+.page .directory-hero p{color:#e5ddec!important}.page .directory-hero .eyebrow{color:#c9a4f3!important}
+.page .category-scroll button{background:linear-gradient(145deg,#3d4050,#242633 60%,#573884)!important;color:#fff!important;border:1px solid rgba(151,119,220,.62)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)!important}
+.page .category-scroll button.active{background:linear-gradient(145deg,#7650ad,#4e3179)!important;border-color:#c09bea!important;color:#fff!important}
+.bf-discover-grid article{background:linear-gradient(145deg,rgba(43,44,58,.97),rgba(30,31,43,.97) 60%,rgba(50,38,72,.97))!important;border:1px solid rgba(151,119,220,.50)!important;color:#fff!important;box-shadow:0 16px 40px rgba(15,13,25,.24)!important}
+.bf-discover-grid article span{color:#cba9f2!important}.bf-discover-grid article p,.bf-discover-grid article small{color:#e4deeb!important}.bf-discover-grid article .btn{color:#fff!important;background:linear-gradient(145deg,#3d4050,#242633 60%,#573884)!important;border:1px solid rgba(151,119,220,.62)!important}
+
+/* Waitlist: strong contrast, readable client data, 24h selects. */
+.bf-waitlist-public label{color:#fff!important;font-weight:850!important}.bf-waitlist-public input,.bf-waitlist-public select{color:#242536!important;background:#f7f4fa!important;border:1px solid #bda7d8!important}
+.bf-waitlist-admin>article{background:linear-gradient(145deg,rgba(43,44,58,.98),rgba(30,31,43,.98) 60%,rgba(50,38,72,.98))!important;border:1px solid rgba(151,119,220,.56)!important;color:#fff!important}
+.bf-waitlist-person b{font-size:17px!important;color:#fff!important}.bf-waitlist-person span{color:#f1edf6!important;font-weight:750!important}.bf-waitlist-admin small,.bf-waitlist-no-match{color:#dcd4e7!important;opacity:1!important}.bf-waitlist-actions .admin-date-trigger{color:#fff!important;background:linear-gradient(145deg,#3d4050,#242633 60%,#573884)!important;border:1px solid rgba(151,119,220,.62)!important}.bf-waitlist-slots button{color:#fff!important;background:linear-gradient(145deg,#5b3d83,#342744)!important;border:1px solid #a985d5!important}.bf-strong-message{color:#fff!important;background:#3a2d49!important;border:1px solid #8f6bb6!important;padding:12px 14px!important;border-radius:12px!important}
+
+/* Booking/admin cards: no grey-on-grey information. */
+.dash-page .booking-row{border:1px solid rgba(151,119,220,.52)!important;border-radius:16px!important;padding:14px!important;margin-bottom:10px!important}
+.dash-page .booking-row .appointment-note{background:rgba(255,255,255,.09)!important;border:1px solid rgba(210,191,235,.28)!important;border-radius:12px!important;padding:9px 11px!important}
+.dash-page .booking-row .appointment-note summary{color:#fff!important;font-weight:850!important}.dash-page .booking-row .appointment-note p{color:#eee8f4!important;background:transparent!important}
+.dash-page .booking-row .booking-delete-btn{color:#fff!important}
+
+/* Verification feedback must be impossible to miss. */
+.bf-code-message{display:block!important;padding:10px 12px!important;border-radius:12px!important;font-size:13px!important;font-weight:850!important}
+.bf-code-message.error{color:#ffdfe5!important;background:rgba(139,48,72,.42)!important;border:1px solid rgba(255,154,181,.48)!important}.bf-code-message.ok{color:#dff7e8!important;background:rgba(45,113,72,.38)!important;border:1px solid rgba(139,226,172,.42)!important}
+
+/* Owner content: upload, preview and Bulgarian date/time controls. */
+.bf-owner-content-upload{display:inline-flex;cursor:pointer}.bf-owner-content-upload input{display:none}.bf-owner-content-upload span{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:12px;color:#fff;background:linear-gradient(145deg,#3d4050,#242633 60%,#573884);border:1px solid rgba(151,119,220,.62);font-weight:850}.bf-owner-content-preview{display:block;width:min(100%,360px);aspect-ratio:16/9;object-fit:cover;border-radius:14px;margin-top:10px;border:1px solid rgba(151,119,220,.4)}.bf-owner-content-datetime{display:grid;grid-template-columns:1fr 180px;gap:12px}.owner-content-editor .admin-date-trigger{width:100%;color:#fff!important;background:linear-gradient(145deg,#3d4050,#242633 60%,#573884)!important;border:1px solid rgba(151,119,220,.62)!important}.owner-content-editor select{min-height:44px}
+@media(max-width:700px){.bf-owner-content-datetime{grid-template-columns:1fr}}
+.bf-calendar-error{color:#fff!important;background:rgba(125,43,67,.86)!important;border:1px solid rgba(255,163,188,.55)!important;padding:10px 12px!important;border-radius:12px!important;font-weight:800!important}
+
+/* BeautyFlow v2.81 stability fixes */
+.booking-calendar-month-legend .month-blocked::before{background:#6f647d!important}
+.booking-calendar-grid button.day-blocked{opacity:.58!important;filter:saturate(.45)!important;cursor:not-allowed!important;background:linear-gradient(145deg,rgba(75,66,88,.72),rgba(38,34,47,.88))!important;border-color:rgba(190,174,210,.24)!important}
+.booking-calendar-grid button.day-blocked i{background:#8e829e!important}
+.bf-loader-exact-logo{filter:none!important;mix-blend-mode:normal!important;opacity:1!important;animation:none!important;transform:none!important}
+.bf-waitlist-admin article,.bf-waitlist-admin article *{text-shadow:none}
+.bf-waitlist-admin article{color:#f8f5ff!important}
+.bf-waitlist-admin .bf-waitlist-person span,.bf-waitlist-admin .bf-waitlist-person small,.bf-waitlist-no-match{color:#ded6eb!important}
+
+/* BeautyFlow v2.82 — booking stability / legal / loader / waitlist */
+.booking-legal-check{display:flex!important;align-items:flex-start!important;gap:10px!important;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;padding:14px!important;overflow:visible!important;white-space:normal!important}
+.booking-legal-check>input[type="checkbox"]{flex:0 0 18px!important;width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;margin:2px 0 0!important;padding:0!important}
+.booking-legal-check>span{display:block!important;flex:1 1 auto!important;min-width:0!important;width:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;white-space:normal!important;word-break:normal!important;overflow-wrap:anywhere!important;line-height:1.55!important}
+.bf-loader-exact-logo{filter:none!important;opacity:1!important;mix-blend-mode:normal!important}
+.availability-board>.bf-waitlist-public{margin-top:14px!important}
+.booking-success .btn{width:100%;justify-content:center;margin-top:8px}
+
+/* BeautyFlow v2.83 — final booking/waitlist/loader stabilization */
+.bf-loader-exact-logo{filter:none!important;opacity:1!important;mix-blend-mode:normal!important}
+.bf-waitlist-public input[readonly]{font-weight:850!important;color:#2f2440!important;background:#eee8f4!important}
+.bf-booking-code-card .bf-code-message.error{display:block!important;color:#ffd8df!important;background:rgba(139,32,61,.35)!important;border:1px solid rgba(255,137,168,.42)!important;padding:10px 12px!important;border-radius:12px!important}
+.bf-booking-code-card .bf-code-message.ok{display:block!important;color:#dcffe8!important;background:rgba(36,117,70,.28)!important;border:1px solid rgba(112,224,155,.35)!important;padding:10px 12px!important;border-radius:12px!important}
+
+/* BeautyFlow v2.84 — booking response + exact approved logo + fixed-date waitlist */
+.bf-waitlist-fixed-date{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;background:linear-gradient(145deg,#343746,#242633 60%,#503477);border:1px solid rgba(174,137,236,.62);color:#fff!important;font-weight:900}

@@ -6,7 +6,7 @@ import {beautyFlowAccessState,accessDays} from "@/lib/beautyflow/subscription";
 
 type RequestRow = {
   id:string; owner_name:string; email:string; phone:string; business_name:string; category:string; city:string;
-  message?:string|null; requested_plan?:string|null; status:"pending"|"active"|"rejected"|"suspended"; created_at:string; reviewed_at?:string|null;
+  message?:string|null; requested_plan?:string|null; requested_category_label?:string|null; status:"pending"|"active"|"rejected"|"suspended"; created_at:string; reviewed_at?:string|null;
 };
 
 const labels:Record<string,string>={pending:"Нова",active:"Активна",rejected:"Отказана",suspended:"Спряна",expired:"Изтекъл",expired_grace:"Гратисен период",expiring:"Изтича скоро"};
@@ -25,10 +25,9 @@ export default function Requests(){
 
  async function sendMail(){
   if(!mail)return;setMailBusy(true);setMsg("Изпращане...");const{data:{session}}=await supabase.auth.getSession();const r=await fetch("/api/owner/subscriber-email",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${session?.access_token}`},body:JSON.stringify({mode:mail.mode,id:mail.id,subject:mailSubject,message:mailBody})});const j=await r.json();setMsg(j.message||"");setMailBusy(false);if(r.ok){setMail(null);setMailSubject("");setMailBody("")}}
- async function decide(id:string,decision:string){await api("/api/owner/request-decision",{id,decision})}
+ async function decide(id:string,decision:string){const label=decision==="approve"?"ОДОБРЯВАНЕ на достъпа":"ОТКАЗ на заявката";if(!confirm(`Потвърди ${label}.\n\nСигурен ли си, че искаш да продължиш?`))return;await api("/api/owner/request-decision",{id,decision})}
  async function action(id:string,actionName:string){
-  const destructive=actionName==="delete"; const text=destructive?"Сигурен ли си? Това ще изтрие заявката, свързания бизнес и тестовия Auth акаунт.":actionName==="suspend"?"Сигурен ли си, че искаш да спреш достъпа?":null;
-  if(text&&!confirm(text))return;
+  const labels:any={delete:"ИЗТРИВАНЕ на заявката и свързания бизнес",suspend:"СПИРАНЕ на достъпа",activate:"АКТИВИРАНЕ на достъпа",renew:"ПОДНОВЯВАНЕ с +30 дни"};const text=labels[actionName]||actionName;if(!confirm(`Потвърди ${text}.\n\nДействието ще бъде изпълнено веднага.`))return;
   await api("/api/owner/business-action",{id,action:actionName});
  }
  return <OwnerShell>
@@ -37,7 +36,7 @@ export default function Requests(){
   {msg&&<div className="owner-notice">{msg}{setupUrl&&<div className="owner-email-fallback"><b>Линк за задаване на парола:</b><input readOnly value={setupUrl}/><button className="btn btn-light" onClick={()=>navigator.clipboard.writeText(setupUrl)}>Копирай линка</button></div>}</div>}
   <div className="request-list">{list.length===0?<div className="empty-state"><h2>Няма заявки.</h2></div>:list.map(x=>{const salon=salonsByRequest[x.id];const effective=x.status==="active"&&salon?beautyFlowAccessState(salon):x.status;const days=salon?accessDays(salon):null;return <div className="request-card" key={x.id}>
    <div className="request-main"><div className="request-avatar">{x.business_name.slice(0,1)}</div><div><div className="request-topline"><span className={`status-pill status-${effective}`}>{labels[effective]||effective}</span>{effective==="expiring"&&days!==null&&<span className="owner-expiry-note">{days} дни</span>}{effective==="expired_grace"&&<span className="owner-expiry-note">само преглед</span>}<span>{new Date(x.created_at).toLocaleString("bg-BG")}</span></div><h3>{x.business_name}</h3><p>{x.owner_name} · {x.category} · {x.city}</p></div></div>
-   <div className="request-details"><span>✉️ {x.email}</span><span>📞 {x.phone}</span><span>📍 {x.city}</span><span>План: {x.requested_plan||"solo"}</span><span>{x.message||"Без описание"}</span></div>
+   <div className="request-details"><span>✉️ {x.email}</span><span>📞 {x.phone}</span><span>📍 {x.city}</span><span>План: {x.requested_plan||"solo"}</span>{x.requested_category_label&&<span className="owner-category-request">✨ Желана специалност: <b>{x.requested_category_label}</b> <button className="btn btn-light" onClick={async()=>{if(!confirm(`Да добавя ли категория „${x.requested_category_label}“ към BeautyFlow?`))return;const{data:{session}}=await supabase.auth.getSession();const r=await fetch("/api/owner/categories",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${session?.access_token}`},body:JSON.stringify({label:x.requested_category_label})});const j=await r.json();setMsg(j.message||"")}}>Добави категория</button></span>}<span>{x.message||"Без описание"}</span></div>
    <div className="request-actions bb-actions"><button disabled={busy===x.id} className="btn btn-mail" onClick={()=>setMail({mode:"one",id:x.id,name:x.business_name})}>Email</button>
     {x.status==="pending"&&<><button disabled={busy===x.id} className="btn btn-dark" onClick={()=>decide(x.id,"approve")}>✅ Одобри</button><button disabled={busy===x.id} className="btn btn-light" onClick={()=>decide(x.id,"reject")}>Откажи</button></>}
     {x.status==="rejected"&&<button disabled={busy===x.id} className="btn btn-dark" onClick={()=>decide(x.id,"approve")}>✅ Одобри</button>}

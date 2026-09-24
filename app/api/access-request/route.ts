@@ -13,7 +13,8 @@ export async function POST(req: Request) {
     const email = clean(b.email, 120).toLowerCase();
     const phone = clean(b.phone, 10);
     const businessName = clean(b.businessName, 100);
-    const category = clean(b.category, 30);
+    const category = clean(b.category, 60);
+    const requestedCategoryLabel = clean(b.requestedCategoryLabel, 80);
     const city = clean(b.city, 80);
     const message = clean(b.message, 500);
     const requestedPlan = ["solo","studio","pro","premium"].includes(clean(b.requestedPlan,20)) ? clean(b.requestedPlan,20) : "solo";
@@ -38,6 +39,8 @@ export async function POST(req: Request) {
     if (!personOk) return NextResponse.json({message:"Името трябва да съдържа букви."},{status:400});
     if (!cityOk) return NextResponse.json({message:"Градът трябва да съдържа букви."},{status:400});
 
+    if (category === "__request_new" && !requestedCategoryLabel) return NextResponse.json({message:"Напиши желаната специалност."},{status:400});
+
     if (!ownerName || !email || !phone || !businessName || !category || !city) {
       return NextResponse.json(
         { message: "Попълни всички задължителни полета." },
@@ -51,7 +54,8 @@ export async function POST(req: Request) {
       email,
       phone,
       business_name: businessName,
-      category,
+      category: category === "__request_new" ? "other" : category,
+      requested_category_label: category === "__request_new" ? requestedCategoryLabel : null,
       city,
       message,
       requested_plan: requestedPlan,

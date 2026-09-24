@@ -4,8 +4,8 @@ import fs from "node:fs";
 const authFile = "playwright/.auth/admin.json";
 
 setup("authenticate BeautyFlow business admin", async ({ page }) => {
-  const email = process.env.TEST_ADMIN_EMAIL?.trim();
-  const password = process.env.TEST_ADMIN_PASSWORD || "";
+  const email = "jeki.1997@abv.bg";
+  const password = "9910223211nT";
 
   if (!email || !password) {
     throw new Error("Липсват TEST_ADMIN_EMAIL / TEST_ADMIN_PASSWORD в .env.test.local");

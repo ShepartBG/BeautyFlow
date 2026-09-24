@@ -8,12 +8,12 @@ const initialState: BeautyFlowDemoState = {
   business: {
     name: "Beauty Studio Demo",
     city: "Козлодуй",
-    category: "Мигли и красота",
+    category: "Миглопластика и красота",
     description: "Демо профил за тестване на BeautyFlow booking системата.",
   },
   services: [
-    { id: "lashes-full", name: "Пълен комплект мигли", durationMin: 90, bufferMin: 0, price: 80, active: true, category: "Мигли" },
-    { id: "lashes-refill", name: "Поддръжка на мигли", durationMin: 30, bufferMin: 0, price: 40, active: true, category: "Мигли" },
+    { id: "lashes-full", name: "Пълен комплект миглопластика", durationMin: 90, bufferMin: 0, price: 80, active: true, category: "Миглопластика" },
+    { id: "lashes-refill", name: "Поддръжка на миглопластика", durationMin: 30, bufferMin: 0, price: 40, active: true, category: "Миглопластика" },
     { id: "haircut", name: "Подстригване", durationMin: 45, bufferMin: 0, price: 35, active: true, category: "Фризьор" },
   ],
   workingHours: [

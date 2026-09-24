@@ -50,6 +50,7 @@ export default defineConfig({
   webServer: isLocal
     ? {
         command: "npm run dev",
+        env: { ...process.env, BEAUTYFLOW_E2E_MODE: "1" },
         url: baseURL,
         reuseExistingServer: true,
         timeout: 120_000,

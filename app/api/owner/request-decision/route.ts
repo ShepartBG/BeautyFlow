@@ -37,7 +37,7 @@ export async function POST(req:Request){
   const {data:salon,error:salonErr}=await auth.admin.from("salons").insert({owner_id:userId,access_request_id:r.id,name:r.business_name,slug,city:r.city,category:r.category,description:r.message||null,active:true,onboarding_completed:false,phone:r.phone||null,plan_id:planId,staff_limit:planLimits[planId]}).select("id,slug").single();
   if(salonErr&&salonErr.code!=="23505")throw salonErr;
   if(salon?.id){
-    await auth.admin.from("booking_settings").upsert({salon_id:salon.id,slot_step_min:15,min_notice_hours:3,min_notice_minutes:180,max_advance_days:60,notify_new_booking:false},{onConflict:"salon_id"});
+    await auth.admin.from("booking_settings").upsert({salon_id:salon.id,slot_step_min:15,min_notice_hours:3,max_advance_days:60,notify_new_booking:false},{onConflict:"salon_id"});
     const {data:ownerStaff}=await auth.admin.from("staff").insert({salon_id:salon.id,user_id:userId,name:r.owner_name||r.business_name,title:"Собственик / специалист",active:true,is_owner:true}).select("id").single();
     if(ownerStaff?.id)await auth.admin.from("business_members").upsert({salon_id:salon.id,user_id:userId,staff_id:ownerStaff.id,role:"owner",active:true},{onConflict:"salon_id,user_id"});
   }

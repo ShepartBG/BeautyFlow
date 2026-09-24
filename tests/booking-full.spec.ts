@@ -54,7 +54,7 @@ async function chooseAdminDate(page: Page, iso: string) {
 test("real booking -> admin verification -> delete -> slot is free again", async ({ page }) => {
   const slug = process.env.TEST_SALON_SLUG?.trim();
   if (!slug) {
-    throw new Error("Добави TEST_SALON_SLUG в .env.test.local.");
+    throw new Error("Добави TEST_SALON_SLUG в .env.test.local");
   }
 
   const verify = watchPage(page);
@@ -63,6 +63,7 @@ test("real booking -> admin verification -> delete -> slot is free again", async
   const stamp = Date.now().toString();
   const customerName = `E2E BeautyFlow ${stamp.slice(-6)}`;
   const customerPhone = `089${stamp.slice(-7)}`;
+  const customerEmail = `e2e-${stamp}@example.com`;
   const note = `AUTOMATED E2E TEST ${stamp}`;
 
   // ---- CLIENT SIDE: create a real booking ----
@@ -114,10 +115,32 @@ test("real booking -> admin verification -> delete -> slot is free again", async
 
   await page.locator('input[name="customerName"]').fill(customerName);
   await page.locator('input[name="customerPhone"]').fill(customerPhone);
+  await page.locator('input[name="customerEmail"]').fill(customerEmail);
   await page.locator('textarea[name="note"]').fill(note);
   await page.locator('input[name="acceptedTerms"]').check();
 
-  await page.getByRole("button", { name: new RegExp(`Потвърди час\\s+${appointmentTime}`) }).click();
+  const codeResponsePromise = page.waitForResponse(r => r.url().includes("/api/public/booking-code") && r.request().method()==="POST");
+  await page.getByRole("button", { name: /Запиши час/i }).click();
+  const codeResponse = await codeResponsePromise;
+  expect(codeResponse.status(), "booking-code API не върна 200").toBe(200);
+  const codeJson = await codeResponse.json();
+  expect(codeJson.verificationId, "Липсва verificationId").toBeTruthy();
+  const testCode = String(codeJson.testCode || "");
+  expect(testCode, "Локалният E2E режим не върна testCode.").toMatch(/^[0-9]{6}$/);
+  const codeInput = page.locator('.bf-booking-code-card input');
+  const confirmCodeButton = page.getByTestId("confirm-booking-code");
+  await expect(codeInput).toBeVisible();
+  await expect(page.getByRole("button", { name: /Изпрати нов код/i })).toBeEnabled();
+  await codeInput.fill(testCode);
+  await expect(codeInput).toHaveValue(testCode);
+  await expect(confirmCodeButton).toBeEnabled();
+  const bookResponsePromise = page.waitForResponse(r => r.url().endsWith("/api/public/book") && r.request().method()==="POST");
+  await confirmCodeButton.click();
+  const bookResponse = await bookResponsePromise;
+  const bookJson = await bookResponse.json().catch(()=>({}));
+  expect(bookResponse.status(), `book API: ${JSON.stringify(bookJson)}`).toBe(200);
+  expect(bookJson.ok).toBe(true);
+  expect(bookJson.appointmentId, "API не върна appointmentId").toBeTruthy();
 
   await expect(page.locator(".booking-success")).toBeVisible({ timeout: 20_000 });
   await expect(page.locator(".booking-success")).toContainText(customerName).catch(() => {});

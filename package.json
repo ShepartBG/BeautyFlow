@@ -11,7 +11,8 @@
     "test:browser:full": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/booking-full.spec.ts --project=chromium",
     "test:browser:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts --project=chromium --headed",
     "test:browser:mobile": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts --project=mobile",
-    "test:browser:report": "playwright show-report"
+    "test:browser:report": "playwright show-report",
+    "test:browser:full:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/booking-full.spec.ts --project=chromium --headed"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.108.2",
