@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { requirePlatformOwner } from "@/lib/ownerAuth";
 import { sendBeautyFlowEmail } from "@/lib/email/emailSender";
 import {approvedEmail,rejectedEmail} from "@/lib/email/templates";
+import { getResetPasswordRedirect } from "@/lib/authRedirect";
 
 function slugify(v:string){return v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9а-я]+/gi,"-").replace(/^-+|-+$/g,"").slice(0,55)||"beauty-business";}
 
@@ -46,10 +47,12 @@ export async function POST(req:Request){
   }
   await auth.admin.from("access_requests").update({status:"active",reviewed_at:new Date().toISOString()}).eq("id",id);
 
-  const site=(process.env.NEXT_PUBLIC_SITE_URL||new URL(req.url).origin).replace(/\/$/,"");
-  const link=await auth.admin.auth.admin.generateLink({type:"recovery",email:r.email,options:{redirectTo:`${site}/reset-password`}});
+  const redirectTo=getResetPasswordRedirect(new URL(req.url).origin);
+  const link=await auth.admin.auth.admin.generateLink({type:"recovery",email:r.email,options:{redirectTo}});
   if(link.error)throw new Error(`Не успях да генерирам линк за парола: ${link.error.message}`);
-  const resetUrl=link.data.properties?.action_link||`${site}/forgot-password`;
+  const tokenHash=link.data.properties?.hashed_token;
+  if(!tokenHash)throw new Error("Липсва защитеният код за задаване на парола.");
+  const resetUrl=`${redirectTo}?token_hash=${encodeURIComponent(tokenHash)}&type=recovery`;
   const mail = e2e ? { ok: true, message: "E2E: email изпращането е пропуснато." } : await sendBeautyFlowEmail({to:r.email,...approvedEmail({ownerName:r.owner_name,businessName:r.business_name,resetUrl})});
 
   if(!mail.ok){

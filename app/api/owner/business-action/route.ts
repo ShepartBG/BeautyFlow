@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requirePlatformOwner } from "@/lib/ownerAuth";
 import { sendBeautyFlowEmail } from "@/lib/email/emailSender";
+import { accessStatusEmail } from "@/lib/email/templates";
 
 function addDaysIso(base: string | null | undefined, days: number) {
   const now = new Date();
@@ -70,12 +71,7 @@ export async function POST(req: Request) {
       const { error } = await auth.admin.from("salons").update({ active: false, subscription_status: "suspended" }).eq("id", salon.id);
       if (error) throw error;
       await auth.admin.from("access_requests").update({ status: "suspended", reviewed_at: new Date().toISOString() }).eq("id", requestId);
-      const mail = await sendBeautyFlowEmail({
-        to: r.email,
-        subject: "BeautyFlow — достъпът е временно спрян",
-        text: `Достъпът до ${r.business_name} е временно спрян. За въпроси се свържете с BeautyFlow.`,
-        html: `<h2>BeautyFlow</h2><p>Достъпът до <strong>${r.business_name}</strong> е временно спрян.</p><p>За повече информация се свържете с нас.</p>`,
-      });
+      const mail = await sendBeautyFlowEmail({to:r.email,...accessStatusEmail({ownerName:r.owner_name||r.business_name,businessName:r.business_name,status:"suspend"})});
       return NextResponse.json({ ok: true, message: mail.ok ? "Достъпът е спрян и е изпратен email." : `Достъпът е спрян. Email грешка: ${mail.message}` });
     }
 
@@ -83,12 +79,7 @@ export async function POST(req: Request) {
       const { error } = await auth.admin.from("salons").update({ active: true, subscription_status: "active" }).eq("id", salon.id);
       if (error) throw error;
       await auth.admin.from("access_requests").update({ status: "active", reviewed_at: new Date().toISOString() }).eq("id", requestId);
-      const mail = await sendBeautyFlowEmail({
-        to: r.email,
-        subject: "BeautyFlow — достъпът е активиран",
-        text: `Достъпът до ${r.business_name} е активиран отново.`,
-        html: `<h2>BeautyFlow</h2><p>Достъпът до <strong>${r.business_name}</strong> е активиран отново.</p>`,
-      });
+      const mail = await sendBeautyFlowEmail({to:r.email,...accessStatusEmail({ownerName:r.owner_name||r.business_name,businessName:r.business_name,status:"activate"})});
       return NextResponse.json({ ok: true, message: mail.ok ? "Достъпът е активиран и е изпратен email." : `Достъпът е активиран. Email грешка: ${mail.message}` });
     }
 
@@ -99,12 +90,7 @@ export async function POST(req: Request) {
       .eq("id", salon.id);
     if (error) throw error;
     await auth.admin.from("access_requests").update({ status: "active", reviewed_at: new Date().toISOString() }).eq("id", requestId);
-    const mail = await sendBeautyFlowEmail({
-      to: r.email,
-      subject: "BeautyFlow — абонаментът е подновен",
-      text: `Достъпът до ${r.business_name} е подновен до ${new Date(nextEnd).toLocaleDateString("bg-BG")}.`,
-      html: `<h2>BeautyFlow</h2><p>Достъпът до <strong>${r.business_name}</strong> е подновен до <strong>${new Date(nextEnd).toLocaleDateString("bg-BG")}</strong>.</p>`,
-    });
+    const mail = await sendBeautyFlowEmail({to:r.email,...accessStatusEmail({ownerName:r.owner_name||r.business_name,businessName:r.business_name,status:"renew",until:new Date(nextEnd).toLocaleDateString("bg-BG")})});
     return NextResponse.json({ ok: true, subscriptionEndsAt: nextEnd, message: mail.ok ? "Подновено с +30 дни и е изпратен email." : `Подновено с +30 дни. Email грешка: ${mail.message}` });
   } catch (e) {
     return NextResponse.json({ message: e instanceof Error ? e.message : "Грешка при действието." }, { status: 500 });
