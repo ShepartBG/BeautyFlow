@@ -12,9 +12,10 @@ type Props={
   x:number;
   y:number;
   onChange:(value:{url:string;x:number;y:number})=>void;
+  onUploaded?:(value:{url:string;x:number;y:number})=>Promise<void>;
 };
 
-export default function ImagePositionUploader({kind,salonId,url,x,y,onChange}:Props){
+export default function ImagePositionUploader({kind,salonId,url,x,y,onChange,onUploaded}:Props){
   const inputRef=useRef<HTMLInputElement|null>(null);
   const boxRef=useRef<HTMLDivElement|null>(null);
   const [preview,setPreview]=useState(url||"");
@@ -57,8 +58,9 @@ export default function ImagePositionUploader({kind,salonId,url,x,y,onChange}:Pr
       const fd=new FormData();fd.append("file",file);fd.append("salonId",salonId);fd.append("kind",kind);
       const r=await fetch("/api/business/media",{method:"POST",headers:{Authorization:`Bearer ${token}`},body:fd});
       const j=await r.json();if(!r.ok)throw new Error(j.message||"Грешка при качване.");
-      URL.revokeObjectURL(local);setPreview(j.url);setPos({x:50,y:50});posRef.current={x:50,y:50};onChange({url:j.url,x:50,y:50});setMessage("Снимката е качена. Намести я с плъзгане и запази профила.");
-    }catch(e){setMessage(e instanceof Error?e.message:"Грешка при качване.")}
+      const value={url:j.url,x:50,y:50};if(onUploaded)await onUploaded(value);
+      URL.revokeObjectURL(local);setPreview(j.url);setPos({x:50,y:50});posRef.current={x:50,y:50};onChange(value);setMessage(onUploaded?"Снимката е качена и запазена. За нова позиция плъзни снимката и запази профила.":"Снимката е качена. Намести я с плъзгане и запази профила.");
+    }catch(e){URL.revokeObjectURL(local);setPreview(url||"");setMessage(e instanceof Error?e.message:"Грешка при качване.")}
     finally{setUploading(false)}
   }
 
