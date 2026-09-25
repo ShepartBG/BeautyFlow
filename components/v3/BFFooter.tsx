@@ -5,7 +5,7 @@ export default function BFFooter() {
     <footer className="bf3-footer">
       <div className="bf3-footer-top">
         <Link href="/" className="bf3-footer-brand">
-          <img src="/beautyflow-logo-circle.png" alt="" />
+          <img src="/beautyflow-logo-circle.webp" alt="" />
           <span><b>Beauty<span>Flow</span></b><small>Bookings made beautiful</small></span>
         </Link>
         <nav>

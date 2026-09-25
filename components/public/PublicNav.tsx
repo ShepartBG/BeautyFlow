@@ -5,7 +5,7 @@ export default function PublicNav() {
     <header className="nav">
       <div className="nav-inner">
         <Link href="/" className="brand" aria-label="BeautyFlow начало">
-          <img className="brand-logo" src="/beautyflow-logo-circle.png" alt="BeautyFlow" />
+          <img className="brand-logo" src="/beautyflow-logo-circle.webp" alt="BeautyFlow" />
           <span className="brand-word">Beauty<span>Flow</span></span>
         </Link>
 

@@ -27,7 +27,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       <div className="admin-layout bf-admin-v13">
         <aside className="sidebar">
           <Link href="/" className="brand">
-            <img className="brand-logo" src="/beautyflow-logo-circle.png" alt="BeautyFlow" />
+            <img className="brand-logo" src="/beautyflow-logo-circle.webp" alt="BeautyFlow" />
             <span className="brand-word">Beauty<span>Flow</span></span>
           </Link>
           <p className="sidebar-kicker">Бизнес панел</p>

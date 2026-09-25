@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="footer bf-v230-footer bf-v257-footer">
       <div className="footer-inner">
         <div className="bf-v230-footer-brand">
-          <img className="footer-logo" src="/beautyflow-logo-circle.png" alt="BeautyFlow" />
+          <img className="footer-logo" src="/beautyflow-logo-circle.webp" alt="BeautyFlow" />
           <div><strong>Beauty<span>Flow</span></strong><small>Bookings made beautiful</small></div>
         </div>
         <div className="bf-v230-footer-nav">

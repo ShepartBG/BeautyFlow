@@ -52,7 +52,7 @@ export default function BFHeader() {
     <header className="bf3-header">
       <div className="bf3-header-inner">
         <Link href="/" className="bf3-brand" onClick={() => setOpen(false)} aria-label="BeautyFlow начало">
-          <img src="/beautyflow-logo-circle.png" alt="" />
+          <img src="/beautyflow-logo-circle.webp" alt="" />
           <span><b>Beauty<span>Flow</span></b><small>Bookings made beautiful</small></span>
         </Link>
 

@@ -33,7 +33,7 @@ export default function CookieBanner() {
   return (
     <div className="bf-cookie-overlay" role="presentation">
       <section className="bf-cookie-modal" role="dialog" aria-modal="true" aria-labelledby="bf-cookie-title" aria-describedby="bf-cookie-description">
-        <div className="bf-cookie-brand"><img src="/beautyflow-logo-circle.png" alt="" /><span>BeautyFlow</span></div>
+        <div className="bf-cookie-brand"><img src="/beautyflow-logo-circle.webp" alt="" /><span>BeautyFlow</span></div>
         <span className="bf-cookie-kicker">ПОВЕРИТЕЛНОСТ И БИСКВИТКИ</span>
         <h2 id="bf-cookie-title">Вашият избор е важен</h2>
         <p id="bf-cookie-description">Използваме строго необходимите технологии, за да работят сигурно входът, резервациите и основните функции на BeautyFlow. Незадължителните технологии се използват само след Ваш избор.</p>

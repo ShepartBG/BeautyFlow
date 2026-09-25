@@ -32,7 +32,7 @@ export default function BeautyFlowLogo({
         className={`${markSize} relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full shadow-[0_16px_50px_rgba(236,72,153,0.28)] ring-1 ring-white/50 transition duration-300 group-hover:scale-[1.04]`}
       >
         <img
-          src="/beautyflow-logo-circle.png"
+          src="/beautyflow-logo-circle.webp"
           alt="BeautyFlow"
           className="h-full w-full object-cover"
         />
