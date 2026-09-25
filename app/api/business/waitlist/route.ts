@@ -1,2 +1,19 @@
 import{NextResponse}from"next/server";import{getSupabaseAdmin}from"@/lib/supabaseAdmin";
 export async function GET(req:Request){try{const token=(req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");if(!token)return NextResponse.json({message:"Няма активна сесия."},{status:401});const db=getSupabaseAdmin();const{data:u,error:ue}=await db.auth.getUser(token);if(ue||!u.user)return NextResponse.json({message:"Невалидна сесия."},{status:401});const url=new URL(req.url),salonId=url.searchParams.get("salonId")||"";if(!salonId)return NextResponse.json({message:"Липсва салон."},{status:400});const[{data:salon},{data:member}]=await Promise.all([db.from("salons").select("owner_id").eq("id",salonId).maybeSingle(),db.from("business_members").select("active").eq("salon_id",salonId).eq("user_id",u.user.id).eq("active",true).maybeSingle()]);if(!salon||(salon.owner_id!==u.user.id&&!member))return NextResponse.json({message:"Нямаш достъп."},{status:403});const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Sofia",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());await db.from("waitlist_entries").update({status:"cancelled",updated_at:new Date().toISOString()}).eq("salon_id",salonId).eq("status","waiting").lt("date_from",today);const{data:rows,error}=await db.from("waitlist_entries").select("*").eq("salon_id",salonId).eq("status","waiting").gte("date_from",today).order("created_at",{ascending:true});if(error)throw error;const serviceIds=[...new Set((rows||[]).map((x:any)=>x.service_id).filter(Boolean))],staffIds=[...new Set((rows||[]).map((x:any)=>x.staff_id).filter(Boolean))];const[{data:services},{data:staff}]=await Promise.all([serviceIds.length?db.from("services").select("id,name,duration_min").in("id",serviceIds):Promise.resolve({data:[]}),staffIds.length?db.from("staff").select("id,name").in("id",staffIds):Promise.resolve({data:[]})]);const sm=new Map((services||[]).map((x:any)=>[x.id,x])),tm=new Map((staff||[]).map((x:any)=>[x.id,x]));return NextResponse.json({items:(rows||[]).map((x:any)=>({...x,services:sm.get(x.service_id)||null,staff:tm.get(x.staff_id)||null}))})}catch(e){return NextResponse.json({message:e instanceof Error?e.message:"Грешка при зареждане на списъка."},{status:500})}}
+
+export async function DELETE(req:Request){
+ try{
+  const token=(req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  if(!token)return NextResponse.json({message:"Няма активна сесия."},{status:401});
+  const db=getSupabaseAdmin();const{data:user,error:userError}=await db.auth.getUser(token);
+  if(userError||!user.user)return NextResponse.json({message:"Невалидна сесия."},{status:401});
+  const {id}=await req.json();if(typeof id!=="string"||!id)return NextResponse.json({message:"Липсва запис за премахване."},{status:400});
+  const{data:entry}=await db.from("waitlist_entries").select("id,salon_id,status").eq("id",id).maybeSingle();
+  if(!entry||entry.status!=="waiting")return NextResponse.json({message:"Записът вече не е в списъка за изчакване."},{status:404});
+  const[{data:salon},{data:member}]=await Promise.all([db.from("salons").select("owner_id").eq("id",entry.salon_id).maybeSingle(),db.from("business_members").select("active").eq("salon_id",entry.salon_id).eq("user_id",user.user.id).eq("active",true).maybeSingle()]);
+  if(!salon||(salon.owner_id!==user.user.id&&!member))return NextResponse.json({message:"Нямаш достъп до този списък."},{status:403});
+  const{data:removed,error}=await db.from("waitlist_entries").update({status:"cancelled",updated_at:new Date().toISOString()}).eq("id",id).eq("status","waiting").select("id").maybeSingle();
+  if(error)throw error;if(!removed)return NextResponse.json({message:"Записът вече е обработен."},{status:409});
+  return NextResponse.json({ok:true,message:"Клиентът е премахнат от списъка за изчакване."});
+ }catch(e){return NextResponse.json({message:e instanceof Error?e.message:"Не успяхме да премахнем клиента."},{status:500})}
+}

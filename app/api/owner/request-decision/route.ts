@@ -38,12 +38,21 @@ export async function POST(req:Request){
   if(existing.data)slug=`${slug}-${crypto.randomBytes(2).toString("hex")}`;
   const planId=["solo","studio","pro","premium"].includes(String(r.requested_plan||""))?String(r.requested_plan):"solo";
   const planLimits:any={solo:1,studio:3,pro:7,premium:15};
-  const {data:salon,error:salonErr}=await auth.admin.from("salons").insert({owner_id:userId,access_request_id:r.id,name:r.business_name,slug,city:r.city,category:r.category,description:r.message||null,active:true,onboarding_completed:false,phone:r.phone||null,plan_id:planId,staff_limit:planLimits[planId]}).select("id,slug").single();
+  const {data:salon,error:salonErr}=await auth.admin.from("salons").insert({owner_id:userId,access_request_id:r.id,name:r.business_name,slug,city:r.city,category:r.category,description:r.message||null,active:true,onboarding_completed:false,phone:r.phone||null,plan_id:planId,staff_limit:planLimits[planId]}).select("id,slug,trial_ends_at,subscription_ends_at").single();
   if(salonErr&&salonErr.code!=="23505")throw salonErr;
   if(salon?.id){
     await auth.admin.from("booking_settings").upsert({salon_id:salon.id,slot_step_min:15,min_notice_hours:3,max_advance_days:60,notify_new_booking:false},{onConflict:"salon_id"});
     const {data:ownerStaff}=await auth.admin.from("staff").insert({salon_id:salon.id,user_id:userId,name:r.owner_name||r.business_name,title:"Собственик / специалист",active:true,is_owner:true}).select("id").single();
     if(ownerStaff?.id)await auth.admin.from("business_members").upsert({salon_id:salon.id,user_id:userId,staff_id:ownerStaff.id,role:"owner",active:true},{onConflict:"salon_id,user_id"});
+  }
+  const {data:approvedSalon}=await auth.admin.from("salons").select("id,trial_ends_at,subscription_ends_at").eq("access_request_id",r.id).maybeSingle();
+  if(!approvedSalon?.id)throw new Error("Не успях да установя срока на достъпа.");
+  let validUntil=approvedSalon.subscription_ends_at||approvedSalon.trial_ends_at;
+  if(!validUntil){
+    const trialEnd=new Date();trialEnd.setUTCDate(trialEnd.getUTCDate()+30);
+    const {error:trialError}=await auth.admin.from("salons").update({trial_ends_at:trialEnd.toISOString()}).eq("id",approvedSalon.id);
+    if(trialError)throw trialError;
+    validUntil=trialEnd.toISOString();
   }
   await auth.admin.from("access_requests").update({status:"active",reviewed_at:new Date().toISOString()}).eq("id",id);
 
@@ -53,7 +62,7 @@ export async function POST(req:Request){
   const tokenHash=link.data.properties?.hashed_token;
   if(!tokenHash)throw new Error("Липсва защитеният код за задаване на парола.");
   const resetUrl=`${redirectTo}?token_hash=${encodeURIComponent(tokenHash)}&type=recovery`;
-  const mail = e2e ? { ok: true, message: "E2E: email изпращането е пропуснато." } : await sendBeautyFlowEmail({to:r.email,...approvedEmail({ownerName:r.owner_name,businessName:r.business_name,resetUrl})});
+  const mail = e2e ? { ok: true, message: "E2E: email изпращането е пропуснато." } : await sendBeautyFlowEmail({to:r.email,...approvedEmail({ownerName:r.owner_name,businessName:r.business_name,resetUrl,validUntil:new Date(validUntil).toLocaleDateString("bg-BG",{timeZone:"Europe/Sofia"})})});
 
   if(!mail.ok){
     return NextResponse.json({ok:true,emailSent:false,setupUrl:resetUrl,message:`Салонът е одобрен, но email НЕ е изпратен: ${mail.message}. Линкът за парола е показан отдолу, за да може да го тестваш ръчно.`});

@@ -10,6 +10,7 @@ export default function Login() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -72,7 +73,7 @@ export default function Login() {
             </div>
             <div className="field">
               <label>Парола</label>
-              <input name="password" type="password" required placeholder="••••••••" />
+              <div className="bf-password-field"><input name="password" type={showPassword?"text":"password"} required placeholder="••••••••" autoComplete="current-password"/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?"Скрий паролата":"Покажи паролата"} aria-pressed={showPassword}>{showPassword?"Скрий":"Покажи"}</button></div>
             </div>
             <button className="btn btn-primary" disabled={busy}>
               {busy ? "Вход..." : "Вход"}
