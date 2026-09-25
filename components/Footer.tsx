@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 export default function Footer() {
@@ -13,7 +15,7 @@ export default function Footer() {
         </div>
         <div className="bf-v230-social"><span>f</span><span>◎</span><span>♪</span></div>
       </div>
-      <div className="bf-v230-footer-bottom"><span>© 2026 BeautyFlow · ВЕЛКРОН ЕООД · ЕИК 208747091 · 0897047668. Всички права запазени.</span><div><Link href="/terms">Общи условия</Link><Link href="/privacy">Политика за поверителност</Link></div></div>
+      <div className="bf-v230-footer-bottom"><span>© 2026 BeautyFlow · ВЕЛКРОН ЕООД · ЕИК 208747091 · 0897047668. Всички права запазени.</span><div><Link href="/terms">Общи условия</Link><Link href="/privacy">Политика за поверителност</Link><Link href="/cookies">Бисквитки</Link><button type="button" className="bf-cookie-footer-button" onClick={() => window.dispatchEvent(new Event("beautyflow-open-cookie-settings"))}>Настройки за бисквитки</button></div></div>
     </footer>
   );
 }

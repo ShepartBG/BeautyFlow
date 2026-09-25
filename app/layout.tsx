@@ -5,6 +5,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import PublicDesignLayer from "@/components/PublicDesignLayer";
 import BulgarianFormGuard from "@/components/BulgarianFormGuard";
 import GlobalPageLoader from "@/components/GlobalPageLoader";
+import CookieBanner from "@/components/CookieBanner";
+import ScrollResetOnRefresh from "@/components/ScrollResetOnRefresh";
 
 export const dynamic = "force-dynamic";
 
@@ -35,5 +37,5 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     "--bf-global-bg-position":design.background_position,
     "--bf-global-overlay":"0",
   } as CSSProperties;
-  return <html lang="bg" style={vars}><body data-bf-design-loaded="1"><PublicDesignLayer/><BulgarianFormGuard/><GlobalPageLoader/><div className="bf-app-content">{children}</div></body></html>;
+  return <html lang="bg" style={vars}><body data-bf-design-loaded="1"><PublicDesignLayer/><BulgarianFormGuard/><ScrollResetOnRefresh/><GlobalPageLoader/><div className="bf-app-content">{children}</div><CookieBanner/></body></html>;
 }
