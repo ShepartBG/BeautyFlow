@@ -4767,3 +4767,6 @@ input.bf-invalid-field,textarea.bf-invalid-field,select.bf-invalid-field{border-
 
 /* Mobile hero image: download a viewport-sized version; leave the existing overlays and layout intact. */
 @media (max-width:820px){.bf-home-refined .bf-v256-hero-surface::before{background-image:url("https://images.pexels.com/photos/7750091/pexels-photo-7750091.jpeg?auto=compress&cs=tinysrgb&w=900")!important}}
+
+/* Paged salon directory keeps only the visible page in the DOM. */
+.bf-directory-pages{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin:28px auto 8px;color:#f4ebff;font-weight:750}.bf-directory-pages button{min-height:42px;padding:9px 16px;border-radius:12px;border:1px solid rgba(193,160,241,.5);background:#30243c;color:#fff;font:inherit;cursor:pointer}.bf-directory-pages button:hover:not(:disabled){background:#624288}.bf-directory-pages button:disabled{opacity:.42;cursor:default}

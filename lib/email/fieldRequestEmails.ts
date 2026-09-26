@@ -28,7 +28,7 @@ type ApprovalDetails = {
 };
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://beautyflow.bg";
-const CONTACT_EMAIL = "beautyflow@abv.bg";
+const CONTACT_EMAIL = "support@beautyflow.bg";
 const CONTACT_PHONE = "0897 047 668";
 const BRAND_GREEN = "#95c900";
 const BRAND_GREEN_LIGHT = "#ec4899";
