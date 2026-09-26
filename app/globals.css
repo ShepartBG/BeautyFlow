@@ -4764,3 +4764,6 @@ input.bf-invalid-field,textarea.bf-invalid-field,select.bf-invalid-field{border-
 .bf-booking-code-modal{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:2147483500!important;display:grid!important;place-items:center!important;overflow:auto!important;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important;overscroll-behavior:contain!important}
 .bf-booking-code-card{max-height:calc(100dvh - 24px);overflow-y:auto;margin:auto}.bf-booking-code-modal .bf-booking-code-card input{font-size:28px!important}
 @media(max-width:640px){.bf-booking-code-card{padding:20px 17px;gap:10px}.bf-booking-code-card h2{font-size:24px}.bf-booking-code-modal .bf-booking-code-card input{font-size:22px!important}}
+
+/* Mobile hero image: download a viewport-sized version; leave the existing overlays and layout intact. */
+@media (max-width:820px){.bf-home-refined .bf-v256-hero-surface::before{background-image:url("https://images.pexels.com/photos/7750091/pexels-photo-7750091.jpeg?auto=compress&cs=tinysrgb&w=900")!important}}

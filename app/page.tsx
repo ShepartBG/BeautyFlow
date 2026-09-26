@@ -44,14 +44,16 @@ const realPhotos = {
   studio: "https://images.pexels.com/photos/7750108/pexels-photo-7750108.jpeg?auto=compress&cs=tinysrgb&w=1600",
 };
 
-export default function Home(){return <main className="page bf-public-page bf-v230-home bf-home-refined"><ScrollReveal/><PublicNav/>
+function photoSrcSet(url:string){return `${url.replace(/w=1600/,"w=480")} 480w, ${url.replace(/w=1600/,"w=960")} 960w, ${url} 1600w`}
+
+export default function Home(){return <main className="page bf-public-page bf-v230-home bf-home-refined"><link rel="preload" as="image" media="(max-width:820px)" href="https://images.pexels.com/photos/7750091/pexels-photo-7750091.jpeg?auto=compress&cs=tinysrgb&w=900" fetchPriority="high"/><link rel="preload" as="image" media="(min-width:821px)" href="https://images.pexels.com/photos/7750091/pexels-photo-7750091.jpeg?auto=compress&cs=tinysrgb&w=1800" fetchPriority="high"/><ScrollReveal/><PublicNav/>
 <section className="bf-v230-hero bf-cinematic-section"><div className="bf-v230-hero-inner bf-v256-hero-surface"><div className="bf-v230-copy">
 <span className="bf-v230-kicker">ПРОФЕСИОНАЛНА СИСТЕМА ЗА ЗАПИСВАНИЯ</span>
 <h1><span className="bf-outline-word">Контрол</span><br/>върху времето.<br/><strong className="bf-outline-word bf-outline-purple">Свобода</strong><br/>за стила.</h1>
 <p>BeautyFlow свързва клиенти и beauty бизнеси в една система — онлайн записване, реален график, услуги, екип, клиенти, почивки и управление от едно място.</p>
 <div className="bf-v230-actions"><Link href="/salons" className="bf-v230-btn bf-v230-btn-dark">▣ <span>Намери място</span></Link><Link href="/register-salon" className="bf-v230-btn bf-v230-btn-light">▱ <span>Добави своя бизнес</span></Link></div>
 <div className="bf-v230-mini-benefits">{miniBenefits.map(([i,l])=><div key={l}><span>{i}</span><b>{l}</b></div>)}</div></div>
-<div className="bf-v230-phone-stage bf-phone-showcase-real"><Image src="/brand/beautyflow-admin-phone-v257.png" alt="BeautyFlow мобилен бизнес панел" width={896} height={1792} priority className="bf-real-phone-image"/></div>
+<div className="bf-v230-phone-stage bf-phone-showcase-real"><Image src="/brand/beautyflow-admin-phone-v257.webp" alt="BeautyFlow мобилен бизнес панел" width={896} height={1792} priority className="bf-real-phone-image"/></div>
 
 </div></section>
 
@@ -66,23 +68,23 @@ export default function Home(){return <main className="page bf-public-page bf-v2
 
 <section className="bf-home-editorial bf-cinematic-section">
   <article className="bf-home-story bf-home-story-wide">
-    <div className="bf-home-story-media"><img src={realPhotos.reception} alt="Клиент в модерен beauty салон" /></div>
+    <div className="bf-home-story-media"><img loading="lazy" decoding="async" src={realPhotos.reception} srcSet={photoSrcSet(realPhotos.reception)} sizes="(max-width:820px) 100vw, 50vw" alt="Клиент в модерен beauty салон" /></div>
     <div className="bf-home-story-copy"><span>ЗА КЛИЕНТИТЕ</span><h2>Намираш. Избираш. Записваш.</h2><p>Разглеждаш профила, услугите и наличните часове и правиш резервация без обаждания и излишно чакане.</p><Link href="/salons">Разгледай салоните <b>→</b></Link></div>
   </article>
   <div className="bf-home-story-pair">
     <article className="bf-home-story bf-home-story-dark">
-      <div className="bf-home-story-media"><img src={realPhotos.barber} alt="Барбър по време на работа" /></div>
+      <div className="bf-home-story-media"><img loading="lazy" decoding="async" src={realPhotos.barber} srcSet={photoSrcSet(realPhotos.barber)} sizes="(max-width:820px) 100vw, 50vw" alt="Барбър по време на работа" /></div>
       <div className="bf-home-story-copy"><span>ГРАФИК И УСЛУГИ</span><h2>Свободните часове следват реалния ти ден.</h2><p>Продължителност на услугите, почивка след тях, работно време и заети часове се събират в една логика.</p></div>
     </article>
     <article className="bf-home-story bf-home-story-light">
-      <div className="bf-home-story-media"><img src={realPhotos.nails} alt="Маникюр в салон" /></div>
+      <div className="bf-home-story-media"><img loading="lazy" decoding="async" src={realPhotos.nails} srcSet={photoSrcSet(realPhotos.nails)} sizes="(max-width:820px) 100vw, 50vw" alt="Маникюр в салон" /></div>
       <div className="bf-home-story-copy"><span>КЛИЕНТИ И ЗАПИСВАНИЯ</span><h2>По-малко хаос. Повече време за работата ти.</h2><p>Виждаш кой идва, кога е часът, каква е услугата и какво се е случило със записа.</p></div>
     </article>
   </div>
 </section>
 
 <section className="bf-home-reminders bf-cinematic-section">
-  <div className="bf-home-reminders-media"><img src={realPhotos.hair} alt="Beauty специалист по време на работа"/></div>
+  <div className="bf-home-reminders-media"><img loading="lazy" decoding="async" src={realPhotos.hair} srcSet={photoSrcSet(realPhotos.hair)} sizes="(max-width:820px) 100vw, 50vw" alt="Beauty специалист по време на работа"/></div>
   <div className="bf-home-reminders-copy"><span>АВТОМАТИЧНИ ИЗВЕСТИЯ</span><h2>По-малко забравени часове. По-малко изгубено време.</h2><p>След записване BeautyFlow автоматично изпраща email до клиента с данните за часа. По желание известие получава и човекът, който извършва услугата, така че важната информация да не се губи между чатове и бележки.</p><div className="bf-home-reminders-points"><b>✓ Клиентът получава потвърждение</b><b>✓ Екипът може да бъде известен</b><b>✓ Часът остава видим в графика</b></div></div>
 </section>
 
@@ -99,19 +101,19 @@ export default function Home(){return <main className="page bf-public-page bf-v2
 </section>
 
 <section className="bf-home-photo-band bf-cinematic-section">
-  <div className="bf-home-photo-main"><img src={realPhotos.hair} alt="Фризьор и клиент в салон"/><div><span>ЗА ПРОФЕСИОНАЛИСТИТЕ</span><h2>BeautyFlow остава на заден план. Работата ти е отпред.</h2><p>Идеята е технологията да подрежда деня, без да се превръща в още една сложна система за обслужване.</p></div></div>
-  <div className="bf-home-photo-side"><img src={realPhotos.massage} alt="Професионална масажна терапия"/><div><b>Различни услуги. Един начин за организация.</b><span>Фризьор, барбър, маникюр, миглопластика, масаж, козметика и още.</span></div></div>
+  <div className="bf-home-photo-main"><img loading="lazy" decoding="async" src={realPhotos.hair} srcSet={photoSrcSet(realPhotos.hair)} sizes="(max-width:820px) 100vw, 50vw" alt="Фризьор и клиент в салон"/><div><span>ЗА ПРОФЕСИОНАЛИСТИТЕ</span><h2>BeautyFlow остава на заден план. Работата ти е отпред.</h2><p>Идеята е технологията да подрежда деня, без да се превръща в още една сложна система за обслужване.</p></div></div>
+  <div className="bf-home-photo-side"><img loading="lazy" decoding="async" src={realPhotos.massage} srcSet={photoSrcSet(realPhotos.massage)} sizes="(max-width:820px) 100vw, 50vw" alt="Професионална масажна терапия"/><div><b>Различни услуги. Един начин за организация.</b><span>Фризьор, барбър, маникюр, миглопластика, масаж, козметика и още.</span></div></div>
 </section>
 
 
 <section className="bf-home-business-story bf-cinematic-section">
-  <div className="bf-home-business-story-media"><img src={realPhotos.studio} alt="Модерен beauty салон и работна среда"/></div>
+  <div className="bf-home-business-story-media"><img loading="lazy" decoding="async" src={realPhotos.studio} srcSet={photoSrcSet(realPhotos.studio)} sizes="(max-width:820px) 100vw, 50vw" alt="Модерен beauty салон и работна среда"/></div>
   <div className="bf-home-business-story-copy"><span>ПОВЕЧЕ ОТ КАЛЕНДАР</span><h2>Профилът, графикът и клиентите работят като една система.</h2><p>BeautyFlow събира ежедневната работа на едно място — от първото разглеждане на салона и избора на услуга до записа, известието и дневния график на екипа.</p><div><b>Публичен профил</b><b>Услуги и екип</b><b>Работно време</b><b>Клиентска история</b></div></div>
 </section>
 
 
 <section className="bf-v266-team-story bf-cinematic-section">
-  <div className="bf-v266-team-story-media"><img src="https://images.pexels.com/photos/3993443/pexels-photo-3993443.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="Фризьор работи с клиент в професионален салон"/></div>
+  <div className="bf-v266-team-story-media"><img loading="lazy" decoding="async" src="https://images.pexels.com/photos/3993443/pexels-photo-3993443.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="Фризьор работи с клиент в професионален салон"/></div>
   <div className="bf-v266-team-story-copy"><span>ЕДИН САЛОН · ОТДЕЛНИ СПЕЦИАЛИСТИ</span><h2>Всеки човек работи по своя график, независимо от графика на колегите си.</h2><p>Собственикът управлява салона и екипа, а всеки специалист има собствено работно време, почивки, отпуски, услуги и публичен профил. Клиентът може да избере конкретен човек или най-ранния свободен час.</p><div><b>Отделни календари</b><b>Специалности и услуги</b><b>Instagram и Facebook профили</b><b>До 10 снимки за салона</b></div><Link href="/specialists">Разгледай специалистите →</Link></div>
 </section>
 
