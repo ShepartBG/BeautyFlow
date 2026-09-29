@@ -7,6 +7,7 @@ const newAdminPassword = process.env.TEST_NEW_ADMIN_PASSWORD || "";
 
 async function login(page: Page, email: string, password: string, target: RegExp) {
   await page.goto("/login");
+  await settle(page);
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.getByRole("button", { name: /^Вход$/ }).click();

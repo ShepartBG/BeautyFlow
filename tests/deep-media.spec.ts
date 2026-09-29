@@ -1,0 +1,114 @@
+import {test,expect} from "@playwright/test";
+import {createClient} from "@supabase/supabase-js";
+import sharp from "sharp";
+import {settle} from "./helpers";
+
+// Run only against a dedicated disposable test salon; every mutation is restored.
+test("deep: salon photos, profile, services, schedule and public descriptions",async({page})=>{
+ test.setTimeout(300_000);
+ const slug=process.env.TEST_DEEP_SALON_SLUG;
+ const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+ expect(slug,"Set TEST_DEEP_SALON_SLUG to a disposable test salon").toBeTruthy();
+ expect(url&&key,"Set Supabase test credentials; never use a customer salon").toBeTruthy();
+ expect(process.env.TEST_BASE_URL||"http://127.0.0.1:3000").toMatch(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/);
+ const db=createClient(url!,key!,{auth:{persistSession:false,autoRefreshToken:false}});
+ const{data:salon}=await db.from("salons").select("*").eq("slug",slug!).single();expect(salon).toBeTruthy();
+ const{data:staff}=await db.from("staff").select("*").eq("salon_id",salon!.id).eq("is_owner",true).single();expect(staff).toBeTruthy();
+ expect(salon!.logo_url,"Use a test salon with no logo; upload overwrites the previous file").toBeFalsy();
+ expect(salon!.cover_url,"Use a test salon with no cover; upload overwrites the previous file").toBeFalsy();
+ expect(staff!.avatar_url,"Use a test specialist with no photo; upload overwrites the previous file").toBeFalsy();
+ const{data:galleryBefore}=await db.from("salon_gallery").select("id").eq("salon_id",salon!.id);
+ expect(galleryBefore?.length,"Use an empty disposable gallery for this test").toBe(0);
+ const{data:hoursBefore}=await db.from("staff_working_hours").select("*").eq("staff_id",staff!.id);
+ const stamp=Date.now(),serviceName=`E2E media ${stamp}`;
+ const uploaded:string[]=[];
+ page.on("response",async response=>{if(!response.url().endsWith("/api/business/media")||!response.ok())return;const body=await response.json().catch(()=>null);if(body?.path)uploaded.push(body.path)});
+ const photo=await sharp({create:{width:1200,height:900,channels:3,background:"#835f9a"}}).jpeg({quality:80}).toBuffer();
+ const file=(name:string)=>({name,mimeType:"image/jpeg",buffer:photo});
+ try{
+  await page.goto("/admin/settings");await settle(page);
+  await page.locator('.media-logo input[type="file"]').setInputFiles(file("test-logo.jpg"));
+  await expect(page.locator(".media-logo .media-message")).toContainText("запазена",{timeout:30_000});
+  await page.locator('.media-cover input[type="file"]').setInputFiles(file("test-cover.jpg"));
+  await expect(page.locator(".media-cover .media-message")).toContainText("качена",{timeout:30_000});
+  const settings=page.locator("form").first();
+  const description="BeautyFlow тестово описание ".repeat(10).slice(0,290);
+  await settings.locator('textarea[name="description"]').fill(description);
+  await settings.getByRole("button",{name:"Запази всички настройки"}).click();
+  await expect(settings.locator(".form-message")).toContainText("запазени");
+  const pictures=Array.from({length:10},(_,i)=>file(`E2E-gallery-${i+1}.jpg`));
+  await page.locator(".bf-gallery-add input").setInputFiles(pictures);
+  await expect(page.locator(".bf-gallery-admin-grid img")).toHaveCount(10,{timeout:160_000});
+  await expect(page.locator(".dash-card.top-gap .form-message").first()).toContainText("10 снимки са качени",{timeout:30_000});
+  const{data:savedGallery}=await db.from("salon_gallery").select("id,image_url").eq("salon_id",salon!.id);
+  expect(savedGallery).toHaveLength(10);
+
+  await page.goto("/admin/my-profile");await settle(page);
+  const bio="Работя с внимание към всеки клиент. ".repeat(3).slice(0,100);
+  await page.locator('select[name="title"]').selectOption({index:1});
+  await page.locator('textarea[name="bio"]').fill(bio);
+  await page.locator('input[name="photo"]').setInputFiles(file("specialist.jpg"));
+  await page.route("**/api/business/media",route=>route.fulfill({status:500,contentType:"application/json",body:JSON.stringify({message:"Тестова грешка при качване."})}));
+  await page.getByRole("button",{name:"Запази профила"}).click();
+  await expect(page.locator(".form-message").last()).toContainText("Тестова грешка при качване.");
+  await page.unroute("**/api/business/media");
+  await page.route("**/api/business/staff/profile",async route=>{await new Promise(resolve=>setTimeout(resolve,500));await route.continue()});
+  await page.getByRole("button",{name:"Запази профила"}).click();
+  await expect(page.getByRole("button",{name:/Запазване на профила/})).toBeVisible();
+  await expect(page.locator(".form-message").last()).toContainText("успешно",{timeout:30_000});
+  await page.unroute("**/api/business/staff/profile");
+  const{data:savedStaff}=await db.from("staff").select("avatar_url,bio").eq("id",staff!.id).single();
+  expect(savedStaff?.avatar_url).toContain("/staff/");expect(savedStaff?.bio).toBe(bio);
+
+  await page.goto("/admin/services");await settle(page);
+  await page.locator('input[name="name"]').fill(serviceName);
+  await page.locator('input[name="price"]').fill("17.50");
+  await page.locator('input[name="duration"]').fill("45");
+  await page.locator('input[type="file"]').first().setInputFiles(file("service.jpg"));
+  await page.getByRole("button",{name:"Добави",exact:true}).click();
+  await expect(page.locator(".bf-service-manage-row").filter({hasText:serviceName})).toBeVisible({timeout:30_000});
+  const{data:service}=await db.from("services").select("price,duration_min,image_url").eq("salon_id",salon!.id).eq("name",serviceName).single();
+  expect(Number(service?.price)).toBeLessThanOrEqual(20);expect(service?.duration_min).toBeLessThanOrEqual(60);expect(service?.image_url).toBeTruthy();
+
+  await page.goto("/admin/schedule");await settle(page);
+  const monday=page.locator(".hours-row").filter({hasText:"Понеделник"});
+  await monday.locator('input[type="checkbox"]').check();
+  await monday.locator("select").first().selectOption("09:00");
+  await monday.locator("select").last().selectOption("17:00");
+  await page.getByRole("button",{name:"Запази целия седмичен график"}).click();
+  await expect(page.locator(".bf-week-save .form-message")).toContainText("запазен");
+  const{data:mondaySaved}=await db.from("staff_working_hours").select("enabled,start_time,end_time").eq("staff_id",staff!.id).eq("weekday",1).single();
+  expect(mondaySaved?.enabled).toBe(true);
+
+  await page.goto(`/salon/${slug}`);await settle(page);
+  await expect(page.locator(".bf-salon-description button")).toContainText("Виж още");
+  await page.locator(".bf-salon-description button").click();
+  await expect(page.locator(".bf-salon-description p")).toContainText(description);
+  await expect(page.locator(".bf-salon-gallery-public button")).toHaveCount(10);
+  await page.locator(".bf-salon-gallery-public button").first().click();
+  await expect(page.locator(".bf-gallery-lightbox-stage img")).toBeVisible();
+  await page.locator(".bf-gallery-lightbox-close").click();
+  await expect(page.locator(".bf-staff-public-v266 .bf-expandable-text")).toHaveCount(0);
+  const card=page.locator(".service-public-card").filter({hasText:serviceName});
+  await card.locator(".bf-service-image-open").click();
+  await expect(page.locator(".bf-service-lightbox-stage img")).toBeVisible();
+  await page.goto("/salons");await settle(page);
+  await page.locator(".directory-search").fill(salon!.name);
+  const directoryCard=page.locator(".salon-card").filter({hasText:salon!.name});
+  await expect(directoryCard.locator(".bf-expandable-text button")).toHaveCount(0);
+  await page.goto("/specialists");await settle(page);
+  const profileCard=page.locator(".bf-specialist-directory-card").filter({hasText:staff!.name});
+  await profileCard.getByRole("link",{name:/Виж специалиста/}).click();
+  await expect(page).toHaveURL(new RegExp(`/specialists/${staff!.id}$`));
+  await expect(page.locator(".bf-specialist-profile-bio p")).toContainText(bio);
+  await expect(page.locator(".bf-specialist-profile-photo img")).toBeVisible();
+ }finally{
+  await db.from("salon_gallery").delete().eq("salon_id",salon!.id);
+  await db.from("services").delete().eq("salon_id",salon!.id).eq("name",serviceName);
+  await db.from("staff_working_hours").delete().eq("staff_id",staff!.id);
+  if(hoursBefore?.length)await db.from("staff_working_hours").insert(hoursBefore);
+  await db.from("staff").update({avatar_url:staff!.avatar_url,bio:staff!.bio,title:staff!.title}).eq("id",staff!.id);
+  await db.from("salons").update({description:salon!.description,logo_url:salon!.logo_url,cover_url:salon!.cover_url,logo_position_x:salon!.logo_position_x,logo_position_y:salon!.logo_position_y,cover_position_x:salon!.cover_position_x,cover_position_y:salon!.cover_position_y}).eq("id",salon!.id);
+  if(uploaded.length)await db.storage.from("salon-media").remove(uploaded);
+ }
+});

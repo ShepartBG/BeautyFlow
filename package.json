@@ -19,6 +19,8 @@
     "test:browser:all:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium --headed",
     "test:browser:functions": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/functional-smoke.spec.ts --project=chromium",
     "test:browser:functions:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/functional-smoke.spec.ts --project=chromium --headed",
+    "test:deep": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/deep-media.spec.ts tests/deep-team-booking.spec.ts --project=chromium",
+    "test:deep:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/deep-media.spec.ts tests/deep-team-booking.spec.ts --project=chromium --headed",
     "test:release": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts tests/functional-smoke.spec.ts --project=chromium",
     "test:release:headed": "node --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/admin.spec.ts tests/public.spec.ts tests/booking-flow.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts tests/functional-smoke.spec.ts --project=chromium --headed",
     "test:production:safe": "node ./node_modules/@playwright/test/cli.js test tests/production-safe.spec.ts --project=chromium",

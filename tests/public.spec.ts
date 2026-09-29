@@ -27,6 +27,16 @@ for (const route of publicRoutes) {
   });
 }
 
+test("public design contains only persistent media URLs", async ({ request }) => {
+  const response = await request.get("/api/public/design");
+  expect(response.ok()).toBeTruthy();
+  const design = await response.json();
+  expect(String(design.background_url || "")).not.toMatch(/^blob:/i);
+  for (const frames of Object.values(design.page_frames || {}) as Array<Array<{media_url?: string}>>) {
+    for (const frame of frames) expect(String(frame.media_url || "")).not.toMatch(/^blob:/i);
+  }
+});
+
 test("first public salon opens without runtime errors", async ({ page }) => {
   const verify = watchPage(page);
   await page.goto("/salons");

@@ -2,6 +2,7 @@ import {NextResponse} from "next/server";
 import {requireBusinessOwner} from "@/lib/beautyflow/businessAuth";
 import {beautyPlan} from "@/lib/beautyflow/plans";
 import {isBeautySpecialty} from "@/lib/beautyflow/specialties";
+import {getResetPasswordRedirect} from "@/lib/authRedirect";
 const clean=(v:unknown,n=160)=>String(v||"").replace(/[<>]/g,"").trim().slice(0,n);
 export async function POST(req:Request){
  const auth=await requireBusinessOwner(req);if(!auth.ok)return NextResponse.json({message:auth.message},{status:auth.status});
@@ -9,8 +10,11 @@ export async function POST(req:Request){
  const salon=auth.business as any;const plan=beautyPlan(salon.plan_id);const limit=Number(salon.staff_limit||plan.staffLimit);const{count}=await auth.admin.from("staff").select("id",{count:"exact",head:true}).eq("salon_id",salon.id).eq("active",true);if((count||0)>=limit)return NextResponse.json({message:`План ${plan.name} позволява до ${limit} активни специалисти. За още хора е нужен по-висок план.`},{status:409});
  const since=new Date(Date.now()-60*60*1000).toISOString();const{count:recentInvites}=await auth.admin.from("staff_invite_log").select("id",{count:"exact",head:true}).eq("salon_id",salon.id).gte("created_at",since);if((recentInvites||0)>=10)return NextResponse.json({message:"Временно ограничихме новите покани. Опитай отново след малко."},{status:429});
  const{data:existing}=await auth.admin.from("business_members").select("id,active").eq("salon_id",salon.id).eq("user_id",auth.user.id).maybeSingle();void existing;
- const origin=new URL(req.url).origin;let invitedUserId:string|null=null;
- const{data:invite,error:inviteError}=await auth.admin.auth.admin.inviteUserByEmail(email,{redirectTo:`${origin}/reset-password`});
+ const redirectTo=getResetPasswordRedirect(new URL(req.url).origin);let invitedUserId:string|null=null;
+ const e2e=process.env.NODE_ENV!=="production"&&process.env.BEAUTYFLOW_E2E_MODE==="1"&&Boolean(process.env.TEST_NEW_STAFF_PASSWORD);
+ const{data:invite,error:inviteError}=e2e
+  ?await auth.admin.auth.admin.createUser({email,password:process.env.TEST_NEW_STAFF_PASSWORD,email_confirm:true})
+  :await auth.admin.auth.admin.inviteUserByEmail(email,{redirectTo});
  if(inviteError){const{data:list}=await auth.admin.auth.admin.listUsers({page:1,perPage:1000});const found=list?.users?.find((u:any)=>String(u.email||"").toLowerCase()===email);if(!found)return NextResponse.json({message:inviteError.message},{status:409});invitedUserId=found.id}else invitedUserId=invite.user?.id||null;
  if(!invitedUserId)return NextResponse.json({message:"Не успяхме да създадем поканата."},{status:500});
  const[{data:otherMembership},{data:ownedSalon}]=await Promise.all([auth.admin.from("business_members").select("salon_id,active").eq("user_id",invitedUserId).eq("active",true).maybeSingle(),auth.admin.from("salons").select("id").eq("owner_id",invitedUserId).maybeSingle()]);

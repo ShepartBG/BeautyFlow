@@ -29,11 +29,13 @@ export default function ImagePositionUploader({kind,salonId,url,x,y,onChange,onU
   useEffect(()=>{const n={x:Number.isFinite(x)?x:50,y:Number.isFinite(y)?y:50};setPos(n);posRef.current=n},[x,y]);
 
   function emit(next:{x:number;y:number},nextUrl=preview){
-    setPos(next);posRef.current=next;if(nextUrl)onChange({url:nextUrl,x:next.x,y:next.y});
+    setPos(next);posRef.current=next;
+    // A blob URL belongs to this browser tab and must never reach salon settings.
+    if(!uploading&&nextUrl&&!nextUrl.startsWith("blob:"))onChange({url:nextUrl,x:next.x,y:next.y});
   }
 
   function pointerDown(e:React.PointerEvent<HTMLDivElement>){
-    if(!preview)return;
+    if(!preview||uploading)return;
     e.currentTarget.setPointerCapture(e.pointerId);
     drag.current={sx:e.clientX,sy:e.clientY,x:pos.x,y:pos.y};
   }
@@ -58,6 +60,7 @@ export default function ImagePositionUploader({kind,salonId,url,x,y,onChange,onU
       const fd=new FormData();fd.append("file",file);fd.append("salonId",salonId);fd.append("kind",kind);
       const r=await fetch("/api/business/media",{method:"POST",headers:{Authorization:`Bearer ${token}`},body:fd});
       const j=await r.json();if(!r.ok)throw new Error(j.message||"Грешка при качване.");
+      if(typeof j.url!=="string"||!(/^https?:\/\//i.test(j.url)||j.url.startsWith("/")))throw new Error("Сървърът не върна постоянен адрес на снимката.");
       const value={url:j.url,x:50,y:50};if(onUploaded)await onUploaded(value);
       URL.revokeObjectURL(local);setPreview(j.url);setPos({x:50,y:50});posRef.current={x:50,y:50};onChange(value);setMessage(onUploaded?"Снимката е качена и запазена. За нова позиция плъзни снимката и запази профила.":"Снимката е качена. Намести я с плъзгане и запази профила.");
     }catch(e){URL.revokeObjectURL(local);setPreview(url||"");setMessage(e instanceof Error?e.message:"Грешка при качване.")}
@@ -72,7 +75,7 @@ export default function ImagePositionUploader({kind,salonId,url,x,y,onChange,onU
       {preview?<img draggable={false} src={preview} alt="Преглед" style={{objectPosition:`${pos.x}% ${pos.y}%`}}/>:<div className="media-empty">Няма качена снимка</div>}
       {preview&&<div className="media-position-hint">↕ плъзни снимката за точно наместване</div>}
     </div>
-    {preview&&<div className="media-editor-actions"><button type="button" className="text-btn" onClick={()=>emit({x:50,y:50})}>Центрирай</button><span>Позиция: {Math.round(pos.x)}% / {Math.round(pos.y)}%</span></div>}
+    {preview&&<div className="media-editor-actions"><button type="button" className="text-btn" disabled={uploading} onClick={()=>emit({x:50,y:50})}>Центрирай</button><span>Позиция: {Math.round(pos.x)}% / {Math.round(pos.y)}%</span></div>}
     {message&&<p className="media-message">{message}</p>}
   </div>
 }

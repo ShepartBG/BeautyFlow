@@ -1,5 +1,6 @@
 import { expect, test as setup } from "@playwright/test";
 import fs from "node:fs";
+import { settle } from "./helpers";
 
 const authFile = "playwright/.auth/admin.json";
 
@@ -14,6 +15,7 @@ setup("authenticate BeautyFlow business admin", async ({ page }) => {
   fs.mkdirSync("playwright/.auth", { recursive: true });
 
   await page.goto("/login");
+  await settle(page);
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: /^Вход$/ }).click();
