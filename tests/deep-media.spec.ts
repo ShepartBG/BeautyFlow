@@ -45,7 +45,7 @@ test("deep: salon photos, profile, services, schedule and public descriptions",a
 
   await page.goto("/admin/my-profile");await settle(page);
   const bio="Работя с внимание към всеки клиент. ".repeat(3).slice(0,100);
-  await page.locator('select[name="title"]').selectOption({index:1});
+  await page.locator('input[name="title"]').fill("Фризьор");
   await page.locator('textarea[name="bio"]').fill(bio);
   await page.locator('input[name="photo"]').setInputFiles(file("specialist.jpg"));
   await page.route("**/api/business/media",route=>route.fulfill({status:500,contentType:"application/json",body:JSON.stringify({message:"Тестова грешка при качване."})}));

@@ -4821,3 +4821,12 @@ input.bf-invalid-field,textarea.bf-invalid-field,select.bf-invalid-field{border-
 .dash-page .booking-row .appointment-note summary,.dash-page .booking-row .appointment-note p{color:#281c35!important;text-shadow:none!important}
 .manage-list>.bf-service-manage-row{display:grid!important;grid-template-columns:96px minmax(0,1fr)!important;align-items:center!important}
 @media(max-width:640px){.manage-list>.bf-service-manage-row{grid-template-columns:72px minmax(0,1fr)!important}}
+
+/* Salon order: booking, services, team, gallery. */
+.page .salon-profile-grid.bf-booking-first{grid-template-columns:minmax(0,1fr)!important;max-width:900px;}
+.page .bf-booking-first>.booking-box{position:static!important;top:auto!important;width:100%;max-width:760px;justify-self:center;margin:0 auto;box-sizing:border-box;}
+.page .bf-booking-first>.salon-profile-content{min-width:0;width:100%;}
+.page .bf-booking-first .bf-salon-team-person{background:#f8f4fc!important;border:1px solid #c5afd7!important;opacity:1!important;}
+.page .bf-booking-first .bf-salon-team-info b{color:#291c37!important;opacity:1!important;text-shadow:none!important;}
+.page .bf-booking-first .bf-salon-team-info span{color:#594366!important;opacity:1!important;text-shadow:none!important;}
+.page .bf-booking-first .bf-salon-team-avatar{background:#e9deef!important;color:#392749!important;}

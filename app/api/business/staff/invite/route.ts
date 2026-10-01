@@ -1,7 +1,7 @@
 import {NextResponse} from "next/server";
 import {requireBusinessOwner} from "@/lib/beautyflow/businessAuth";
 import {beautyPlan} from "@/lib/beautyflow/plans";
-import {isBeautySpecialty} from "@/lib/beautyflow/specialties";
+import {isValidSpecialtyTitle} from "@/lib/beautyflow/specialties";
 import {getResetPasswordRedirect} from "@/lib/authRedirect";
 import {sendBeautyFlowEmail} from "@/lib/email/emailSender";
 import {staffInvitationEmail} from "@/lib/email/templates";
@@ -12,7 +12,7 @@ export async function POST(req:Request){
   const b=await req.json(),salon=auth.business;
   const{count:recentInvites,error:logError}=await auth.admin.from("staff_invite_log").select("id",{count:"exact",head:true}).eq("salon_id",salon.id).gte("created_at",new Date(Date.now()-3600000).toISOString());
   if(logError)throw logError;if((recentInvites||0)>=10)return NextResponse.json({message:"Достигнат е лимитът за покани. Опитай отново след един час."},{status:429});
-  let name=clean(b.name,90),title=clean(b.title,90),email=clean(b.email,160).toLowerCase(),staffId=clean(b.staffId,50),userId="";
+  let name=clean(b.name,90),title=String(b.title||" ").trim(),email=clean(b.email,160).toLowerCase(),staffId=clean(b.staffId,50),userId="";
   const redirectTo=getResetPasswordRedirect(new URL(req.url).origin);
   const e2e=process.env.NODE_ENV!=="production"&&process.env.BEAUTYFLOW_E2E_MODE==="1"&&Boolean(process.env.TEST_NEW_STAFF_PASSWORD);
   let link="";
@@ -22,7 +22,7 @@ export async function POST(req:Request){
    const{data:user,error:userError}=await auth.admin.auth.admin.getUserById(row.user_id);if(userError)throw userError;
    email=user.user?.email||"";name=row.name;userId=row.user_id;
   }else{
-   if(!name||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!isBeautySpecialty(title))return NextResponse.json({message:"Попълни име, валиден имейл и специалност."},{status:400});
+   if(!name||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!isValidSpecialtyTitle(title))return NextResponse.json({message:"Попълни име, валиден имейл и специалност."},{status:400});
    const limit=Number((salon as any).staff_limit||beautyPlan((salon as any).plan_id).staffLimit);
    const{count,error:countError}=await auth.admin.from("staff").select("id",{count:"exact",head:true}).eq("salon_id",salon.id).eq("active",true);if(countError)throw countError;
    if((count||0)>=limit)return NextResponse.json({message:`Планът позволява до ${limit} активни специалисти.`},{status:409});

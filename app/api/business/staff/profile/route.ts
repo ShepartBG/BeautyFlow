@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import {requireBusinessUser} from "@/lib/beautyflow/businessAuth";
-import {isBeautySpecialty} from "@/lib/beautyflow/specialties";
+import {isValidSpecialtyTitle} from "@/lib/beautyflow/specialties";
 
 export async function PATCH(req:Request){
  const auth=await requireBusinessUser(req);
@@ -12,7 +12,7 @@ export async function PATCH(req:Request){
   const{data:staff}=await auth.admin.from("staff").select("id,user_id").eq("id",staffId).eq("salon_id",auth.business.id).maybeSingle();
   if(!staff||((auth.role!=="owner"||staff.user_id!==auth.user.id)&&auth.staffId!==staffId))return NextResponse.json({message:"Нямаш достъп до този профил."},{status:403});
   const name=String(body.name||"").trim().slice(0,90),title=String(body.title||"").trim();
-  if(!name||!isBeautySpecialty(title))return NextResponse.json({message:"Попълни име и избери специалност."},{status:400});
+  if(!name||!isValidSpecialtyTitle(title))return NextResponse.json({message:"Попълни име и специалност до 90 символа."},{status:400});
   if(typeof body.avatar_url==="string"){
    const storageOrigin=new URL(process.env.NEXT_PUBLIC_SUPABASE_URL||"https://invalid.local").origin;
    let image:URL;try{image=new URL(body.avatar_url)}catch{return NextResponse.json({message:"Невалиден адрес на снимката."},{status:400})}

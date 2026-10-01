@@ -31,7 +31,7 @@ test("deep: second specialist, independent same-time bookings and waitlists",asy
   await page.goto("/admin/staff");await settle(page);
   const invite=page.locator(".dash-card form").first();
   await invite.locator('[name="name"]').fill(name);
-  await invite.locator('[name="title"]').selectOption({index:1});
+  await invite.locator('[name="title"]').fill("Фризьор");
   await invite.locator('[name="email"]').fill(email);
   const response=page.waitForResponse(r=>r.url().endsWith("/api/business/staff/invite")&&r.request().method()==="POST");
   await invite.getByRole("button",{name:"Изпрати покана"}).click();

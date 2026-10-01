@@ -1,5 +1,6 @@
 import { test, expect, Page } from "@playwright/test";
 import { settle, watchPage } from "./helpers";
+import { customerEmail as testEmail, enterBookingCode, isOnline, requireVisibleOnlineBrowser } from "./online-email";
 
 const MONTHS: Record<string, number> = {
   "Януари": 1, "Февруари": 2, "Март": 3, "Април": 4,
@@ -46,7 +47,9 @@ async function chooseAdminDate(page: Page, iso: string) {
   await page.waitForTimeout(900);
 }
 
-test("real booking -> admin verification -> delete -> slot is free again", async ({ page }) => {
+test("real booking -> admin verification -> delete -> slot is free again", async ({ page, baseURL }, testInfo) => {
+  test.setTimeout(isOnline(baseURL) ? 300_000 : 90_000);
+  requireVisibleOnlineBrowser(baseURL, testInfo);
   const slug = process.env.TEST_SALON_SLUG?.trim();
   if (!slug) throw new Error("Добави TEST_SALON_SLUG в .env.test.local");
   const verify = watchPage(page);
@@ -54,7 +57,7 @@ test("real booking -> admin verification -> delete -> slot is free again", async
   const stamp = Date.now().toString();
   const customerName = `E2E BeautyFlow ${stamp.slice(-6)}`;
   const customerPhone = `089${stamp.slice(-7)}`;
-  const customerEmail = `e2e-${stamp}@example.com`;
+  const customerEmail = testEmail(baseURL, `e2e-${stamp}@example.com`);
   const note = `AUTOMATED E2E TEST ${stamp}`;
 
   await page.goto(`/salon/${encodeURIComponent(slug)}`);
@@ -93,17 +96,11 @@ test("real booking -> admin verification -> delete -> slot is free again", async
   const codeResponsePromise = page.waitForResponse(r => r.url().includes("/api/public/booking-code") && r.request().method() === "POST");
   await page.getByRole("button", { name: /Запиши час/i }).click();
   const codeResponse = await codeResponsePromise;
-  expect(codeResponse.status(), "booking-code API не върна 200").toBe(200);
-  const codeJson = await codeResponse.json();
+  const codeJson = await codeResponse.json().catch(() => ({}));
+  expect(codeResponse.status(), `booking-code API: ${JSON.stringify(codeJson)}`).toBe(200);
   expect(codeJson.verificationId, "Липсва verificationId").toBeTruthy();
-  const testCode = String(codeJson.testCode || "");
-  expect(testCode, "Локалният E2E режим не върна testCode.").toMatch(/^[0-9]{6}$/);
-
-  const codeInput = page.locator(".bf-booking-code-card input");
+  await enterBookingCode(page, baseURL, codeJson);
   const confirmCodeButton = page.getByTestId("confirm-booking-code");
-  await expect(codeInput).toBeVisible();
-  await codeInput.fill(testCode);
-  await expect(codeInput).toHaveValue(testCode);
   await expect(confirmCodeButton).toBeEnabled();
 
   const bookResponsePromise = page.waitForResponse(r => r.url().endsWith("/api/public/book") && r.request().method() === "POST");

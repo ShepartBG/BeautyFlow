@@ -1,5 +1,6 @@
 import { test, expect, Page } from "@playwright/test";
 import { settle, watchPage } from "./helpers";
+import { customerEmail, isOnline } from "./online-email";
 
 const MONTHS: Record<string, number> = {
   "Януари": 1, "Февруари": 2, "Март": 3, "Април": 4,
@@ -36,7 +37,7 @@ async function chooseAdminDate(page:Page,iso:string){
   await expect(day).toBeVisible(); await day.click(); await page.waitForTimeout(700);
 }
 
-test("waitlist -> admin -> assign slot -> calendar -> cleanup", async ({page})=>{
+test("waitlist -> admin -> assign slot -> calendar -> cleanup", async ({page,baseURL})=>{
   test.setTimeout(90_000);
   const slug=process.env.TEST_SALON_SLUG?.trim();
   if(!slug) throw new Error("Добави TEST_SALON_SLUG в .env.test.local");
@@ -44,7 +45,7 @@ test("waitlist -> admin -> assign slot -> calendar -> cleanup", async ({page})=>
   const stamp=Date.now().toString();
   const name=`E2E Waitlist ${stamp.slice(-6)}`;
   const phone=`088${stamp.slice(-7)}`;
-  const email=`wait-${stamp}@example.com`;
+  const email=customerEmail(baseURL,`wait-${stamp}@example.com`);
 
   await page.goto(`/salon/${encodeURIComponent(slug)}`); await settle(page);
   const service=page.locator(".booking-box form select").first();
@@ -114,5 +115,6 @@ test("waitlist -> admin -> assign slot -> calendar -> cleanup", async ({page})=>
   page.once("dialog",async d=>{ await d.accept(); });
   await appointment.getByRole("button",{name:"Изтрий часа"}).click();
   await expect(appointment).toHaveCount(0,{timeout:15000});
+  if(isOnline(baseURL)) expect(aj.emailSent, "Часът е записан и изчистен, но сървърът не отчете успешно изпращане на имейла.").toBe(true);
   await verify();
 });
