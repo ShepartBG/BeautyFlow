@@ -97,9 +97,9 @@ test("waitlist -> admin -> assign slot -> calendar -> cleanup", async ({page})=>
   const time=(slotText.match(/^\d{2}:\d{2}/)||[])[0];
   expect(time,"Не успях да разчета свободния час.").toBeTruthy();
 
-  page.once("dialog",async d=>{ expect(d.type()).toBe("confirm"); await d.accept(); });
   const assignResponse=page.waitForResponse(r=>r.url().endsWith("/api/business/waitlist-assign")&&r.request().method()==="POST");
   await slot.click();
+  await row.getByRole("button",{name:"Потвърди записването"}).click();
   const ar=await assignResponse; const aj=await ar.json().catch(()=>({}));
   expect(ar.status(),`waitlist-assign API: ${JSON.stringify(aj)}`).toBe(200);
   expect(aj.ok).toBe(true);

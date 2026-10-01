@@ -1,14 +1,13 @@
 "use client";
 import {useState} from "react";
 import PublicNav from "@/components/PublicNav";
-import {supabase} from "@/lib/supabase";
+
 export default function Forgot(){
  const[msg,setMsg]=useState(""),[busy,setBusy]=useState(false);
  async function submit(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();if(busy)return;setBusy(true);setMsg("");
   try{const f=new FormData(e.currentTarget),email=String(f.get("email")||"");
-   const{error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${location.origin}/reset-password`});
-   setMsg(error?error.message:"Изпратихме линк, ако имейлът съществува.");
+   const response=await fetch("/api/auth/password-reset",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email})});const result=await response.json().catch(()=>({}));setMsg(result.message||"Не успяхме да изпратим заявката. Опитай отново.");
   }catch{setMsg("Не успяхме да изпратим заявката. Опитай отново.")}
   finally{setBusy(false)}
  }

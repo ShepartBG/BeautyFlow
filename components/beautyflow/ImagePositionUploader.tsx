@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect,useRef,useState} from "react";
+import {uploadMedia} from "@/lib/beautyflow/uploadMedia";
 import {supabase} from "@/lib/supabase";
 
 type Kind="logo"|"cover";
@@ -50,16 +51,16 @@ export default function ImagePositionUploader({kind,salonId,url,x,y,onChange,onU
   function pointerUp(){if(drag.current){drag.current=null;emit(posRef.current)}}
 
   async function upload(file:File){
-    if(!file.type.startsWith("image/")){setMessage("Избери изображение.");return}
-    if(file.size>8*1024*1024){setMessage("Снимката трябва да е до 8 MB.");return}
+    if(file.type&&!file.type.startsWith("image/")){setMessage("Избери изображение.");return}
+    if(file.size>16*1024*1024){setMessage("Снимката трябва да е до 16 MB.");return}
     setUploading(true);setMessage("");
-    const local=URL.createObjectURL(file);setPreview(local);setPos({x:50,y:50});posRef.current={x:50,y:50};
+    let local="";
     try{
+      local=URL.createObjectURL(file);setPreview(local);setPos({x:50,y:50});posRef.current={x:50,y:50};
       const {data:s}=await supabase.auth.getSession();
       const token=s.session?.access_token;if(!token)throw new Error("Сесията е изтекла. Влез отново.");
       const fd=new FormData();fd.append("file",file);fd.append("salonId",salonId);fd.append("kind",kind);
-      const r=await fetch("/api/business/media",{method:"POST",headers:{Authorization:`Bearer ${token}`},body:fd});
-      const j=await r.json();if(!r.ok)throw new Error(j.message||"Грешка при качване.");
+      const j=await uploadMedia(fd,token);
       if(typeof j.url!=="string"||!(/^https?:\/\//i.test(j.url)||j.url.startsWith("/")))throw new Error("Сървърът не върна постоянен адрес на снимката.");
       const value={url:j.url,x:50,y:50};if(onUploaded)await onUploaded(value);
       URL.revokeObjectURL(local);setPreview(j.url);setPos({x:50,y:50});posRef.current={x:50,y:50};onChange(value);setMessage(onUploaded?"Снимката е качена и запазена. За нова позиция плъзни снимката и запази профила.":"Снимката е качена. Намести я с плъзгане и запази профила.");
@@ -70,7 +71,7 @@ export default function ImagePositionUploader({kind,salonId,url,x,y,onChange,onU
   const isLogo=kind==="logo";
   return <div className={`media-editor ${isLogo?"media-logo":"media-cover"}`}>
     <div className="media-editor-head"><div><b>{isLogo?"Лого / снимка за лице":"Фон / корица"}</b><small>{isLogo?"Квадратна снимка. Плъзни, за да наместиш лицето/логото.":"Плъзни снимката, докато основният обект е точно на желаното място."}</small></div><button type="button" className="btn btn-light" onClick={()=>inputRef.current?.click()} disabled={uploading}>{uploading?"Качване...":"Качи снимка"}</button></div>
-    <input ref={inputRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>{const f=e.target.files?.[0];if(f)upload(f);e.currentTarget.value=""}}/>
+    <input ref={inputRef} hidden type="file" accept="image/*,.heic,.heif,.avif" onChange={e=>{const f=e.target.files?.[0];if(f)upload(f);e.currentTarget.value=""}}/>
     <div ref={boxRef} className="media-position-box" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}>
       {preview?<img draggable={false} src={preview} alt="Преглед" style={{objectPosition:`${pos.x}% ${pos.y}%`}}/>:<div className="media-empty">Няма качена снимка</div>}
       {preview&&<div className="media-position-hint">↕ плъзни снимката за точно наместване</div>}

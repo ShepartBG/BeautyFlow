@@ -1,12 +1,13 @@
+import ReadyStoryImage from "@/components/ReadyStoryImage";
 import PublicNav from "@/components/PublicNav";
 import Footer from "@/components/Footer";
 import ScrollReveal from "@/components/ScrollReveal";
 import Link from "next/link";
 
 const P = {
-  interior: "https://images.pexels.com/photos/7750114/pexels-photo-7750114.jpeg?auto=compress&cs=tinysrgb&w=1600",
-  work: "https://images.pexels.com/photos/8834099/pexels-photo-8834099.jpeg?auto=compress&cs=tinysrgb&w=1600",
-  client: "https://images.pexels.com/photos/3993330/pexels-photo-3993330.jpeg?auto=compress&cs=tinysrgb&w=1600",
+  interior: "/story/7750114.webp",
+  work: "/story/8834099.webp",
+  client: "/story/3993330.webp",
 };
 
 export default function About() {
@@ -18,7 +19,7 @@ export default function About() {
 
       <section className="container section bf-readable-panel bf-content-page bf-story-card bf-v256-story-card bf-longform-page">
         <div className="bf-v256-story-visual">
-          <img src={P.interior} alt="Интериор на модерен салон за красота" />
+          <ReadyStoryImage priority src={P.interior} alt="Интериор на модерен салон за красота" />
         </div>
 
         <div className="about-hero">
@@ -64,7 +65,7 @@ export default function About() {
         </div>
 
         <div className="bf-longform-story">
-          <img src={P.work} alt="Професионален стилист по време на работа" />
+          <ReadyStoryImage src={P.work} alt="Професионален стилист по време на работа" />
           <div>
             <small>СЪЗДАДЕНО ЗА РЕАЛНА РАБОТА</small>
             <h2>Системата остава на заден план, за да може бизнесът да бъде отпред.</h2>
@@ -129,7 +130,7 @@ export default function About() {
         </div>
 
         <div className="bf-longform-story reverse">
-          <img src={P.client} alt="Фризьор подготвя клиент в модерен салон" />
+          <ReadyStoryImage src={P.client} alt="Фризьор подготвя клиент в модерен салон" />
           <div>
             <small>ПРОФИЛ, КОЙТО РАБОТИ ЗА ТЕБ</small>
             <h2>Доброто клиентско изживяване започва още преди посещението.</h2>

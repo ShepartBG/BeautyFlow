@@ -100,7 +100,7 @@ test("deep: second specialist, independent same-time bookings and waitlists",asy
   await page.goto("/admin/waitlist");await settle(page);await expect(page.locator(".bf-waitlist-admin article")).toHaveCount(2);
   await staffPage.goto("/admin/waitlist");await settle(staffPage);await expect(staffPage.locator(".bf-waitlist-admin article")).toHaveCount(2);
   const row=page.locator(".bf-waitlist-admin article").first();await row.getByRole("button",{name:"Провери свободни"}).click();await expect(row.locator(".bf-waitlist-slots button").first()).toBeVisible();
-  page.once("dialog",d=>d.accept());await row.locator(".bf-waitlist-slots button").first().click();
+  await row.locator(".bf-waitlist-slots button").first().click();await row.getByRole("button",{name:"Потвърди записването"}).click();
   await expect(page.locator(".bf-waitlist-admin article")).toHaveCount(1);
   const{data:assigned}=await db.from("waitlist_entries").select("appointment_id").in("id",waitIds).eq("status","booked").maybeSingle();
   if(assigned?.appointment_id)appointments.push(assigned.appointment_id);
