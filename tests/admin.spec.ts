@@ -3,6 +3,7 @@ import { settle, watchPage } from "./helpers";
 
 const adminRoutes = [
   "/admin",
+  "/admin/overview",
   "/admin/bookings",
   "/admin/calendar",
   "/admin/customers",

@@ -115,32 +115,24 @@ test("real booking -> admin verification -> delete -> slot is free again", async
   await expect(page.locator(".booking-success")).toContainText(serviceName);
   await expect(page.locator(".booking-success")).toContainText(appointmentTime);
 
-  await page.goto("/admin/bookings");
+  // Owner-wide verification belongs in Общ преглед. Personal Bookings/Calendar
+  // are intentionally scoped to the currently logged-in specialist.
+  await page.goto(`/admin/overview?date=${appointmentDate}`);
   await settle(page);
-  await chooseAdminDate(page, appointmentDate);
 
   const row = page.locator(".booking-row").filter({ hasText: customerName }).first();
-  await expect(row, "Новото записване не се появи в Админ → Записвания.").toBeVisible({ timeout: 12000 });
+  await expect(row, "Новото записване не се появи в Админ → Общ преглед.").toBeVisible({ timeout: 12000 });
   await expect(row).toContainText(serviceName);
   await expect(row).toContainText(appointmentTime);
   await expect(row).toContainText(customerPhone);
   await expect(row).toContainText("Подробности");
 
-  await page.goto("/admin/calendar");
-  await settle(page);
-  await chooseAdminDate(page, appointmentDate);
-
-  const calendarAppointment = page.locator(".calendar-appointment").filter({ hasText: customerName }).first();
-  await expect(calendarAppointment, "Новото записване не се появи в Админ → Календар.").toBeVisible({ timeout: 12000 });
-  await expect(calendarAppointment).toContainText(serviceName);
-  await expect(calendarAppointment).toContainText(appointmentTime);
-
   page.once("dialog", async dialog => {
     expect(dialog.type()).toBe("confirm");
     await dialog.accept();
   });
-  await calendarAppointment.getByRole("button", { name: "Изтрий часа" }).click();
-  await expect(calendarAppointment).toHaveCount(0, { timeout: 12000 });
+  await row.getByRole("button", { name: "Изтрий" }).click();
+  await expect(row).toHaveCount(0, { timeout: 12000 });
 
   await page.goto(`/salon/${encodeURIComponent(slug)}`);
   await settle(page);

@@ -16,7 +16,13 @@ test("deep: second specialist, independent same-time bookings and waitlists",asy
  expect(process.env.TEST_BASE_URL||"http://127.0.0.1:3000").toMatch(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/);
  const db=createClient(url!,key!,{auth:{persistSession:false,autoRefreshToken:false}});
  const{data:salon}=await db.from("salons").select("*").eq("slug",slug!).single();expect(salon).toBeTruthy();
- const{data:ownerStaff}=await db.from("staff").select("id").eq("salon_id",salon!.id).eq("is_owner",true).single();expect(ownerStaff).toBeTruthy();
+ const{data:ownerStaff}=await db.from("staff").select("id,user_id").eq("salon_id",salon!.id).eq("is_owner",true).single();expect(ownerStaff).toBeTruthy();
+ const adminEmail=(process.env.TEST_ADMIN_EMAIL||"").trim();
+ expect(adminEmail,"Set TEST_ADMIN_EMAIL for the authenticated Playwright owner").toBeTruthy();
+ const{data:adminAuth}=await db.auth.admin.listUsers({page:1,perPage:1000});
+ const adminUser=adminAuth.users.find(u=>(u.email||"").toLowerCase()===adminEmail.toLowerCase());
+ expect(adminUser,"TEST_ADMIN_EMAIL "+adminEmail+" was not found in Supabase Auth").toBeTruthy();
+ expect(ownerStaff!.user_id,"Owner staff for TEST_DEEP_SALON_SLUG="+slug+" has no linked user_id").toBe(adminUser!.id);
  const{data:services}=await db.from("services").select("id,name").eq("salon_id",salon!.id).eq("active",true).limit(1);
  expect(services?.length,"Add an active service to the disposable test salon").toBeGreaterThan(0);
  const{data:ownerHours}=await db.from("staff_working_hours").select("*").eq("staff_id",ownerStaff!.id);
@@ -60,18 +66,36 @@ test("deep: second specialist, independent same-time bookings and waitlists",asy
    try{await publicPage.goto(`/salon/${slug}`);await settle(publicPage);
     await publicPage.locator(".booking-box form select").first().selectOption(services![0].id);
     await publicPage.locator(".booking-box form select").nth(1).selectOption(staff);
-    if(firstDate){const [year,month,day]=firstDate.split("-").map(Number);for(let i=0;i<12;i++){const[m,y]=(await publicPage.locator(".booking-calendar-head strong").innerText()).trim().split(/\s+/);if(Number(y)===year&&MONTHS[m]===month)break;await publicPage.locator(".booking-calendar-head button").last().click()}await publicPage.locator(".booking-calendar-grid button.day-available").filter({has:publicPage.locator("span",{hasText:new RegExp(`^${day}$`)})}).first().click()}
-    else {let day=publicPage.locator(".booking-calendar-grid button.day-available:not([disabled])").first();for(let i=0;i<4&&!(await day.isVisible().catch(()=>false));i++)await publicPage.locator(".booking-calendar-head button").last().click();await expect(day).toBeVisible();await day.click()}
-    const date=await dateFromCalendar(publicPage);
-    const slots=publicPage.locator(".timeline-grid button.available");await expect(slots.first()).toBeVisible();
-    const chosen=firstTime?slots.filter({has:publicPage.locator("b",{hasText:firstTime})}).first():slots.first();
-    await expect(chosen,"Both specialists must offer the same hour").toBeVisible();const time=(await chosen.locator("b").innerText()).trim();await chosen.click();
+    let date="";
+    const slots=publicPage.locator(".timeline-grid button.available");
+    if(firstDate){
+     const [year,month,day]=firstDate.split("-").map(Number);
+     for(let i=0;i<12;i++){const[m,y]=(await publicPage.locator(".booking-calendar-head strong").innerText()).trim().split(/\s+/);if(Number(y)===year&&MONTHS[m]===month)break;await publicPage.locator(".booking-calendar-head button").last().click()}
+     const targetDay=publicPage.locator(".booking-calendar-grid button.day-available").filter({has:publicPage.locator("span",{hasText:new RegExp(`^${day}$`)})}).first();
+     await expect(targetDay,`Target date ${firstDate} is not available for the second specialist`).toBeVisible();
+     await targetDay.click();date=await dateFromCalendar(publicPage);
+    }else{
+     let found=false;
+     for(let monthTry=0;monthTry<4&&!found;monthTry++){
+      const days=publicPage.locator(".booking-calendar-grid button.day-available:not([disabled])");
+      const count=await days.count();
+      for(let i=0;i<count;i++){
+       await days.nth(i).click();
+       await publicPage.waitForTimeout(350);
+       if(await slots.first().isVisible().catch(()=>false)){date=await dateFromCalendar(publicPage);found=true;break}
+      }
+      if(!found)await publicPage.locator(".booking-calendar-head button").last().click();
+     }
+     expect(found,"No public day with a real bookable slot was found in the next 4 months").toBeTruthy();
+    }
+    const chosen=firstTime?slots.filter({has:publicPage.locator("b",{hasText:new RegExp(`^${firstTime}$`)})}).first():slots.first();
+    await expect(chosen,"Both specialists must offer the same hour").toBeVisible({timeout:15000});const time=(await chosen.locator("b").innerText()).trim();await chosen.click();
     await publicPage.locator('[name="customerName"]').fill(customer);await publicPage.locator('[name="customerPhone"]').fill(phone);await publicPage.locator('[name="customerEmail"]').fill(`e2e-${stamp}-${staff.slice(0,6)}@example.com`);
     await publicPage.locator('[name="acceptedTerms"]').check();
     const code=publicPage.waitForResponse(r=>r.url().endsWith("/api/public/booking-code")&&r.request().method()==="POST");await publicPage.getByRole("button",{name:"Запиши час"}).click();const codeJson=await(await code).json();expect(codeJson.testCode).toMatch(/^\d{6}$/);
     await publicPage.locator(".bf-booking-code-card input").fill(codeJson.testCode);
     const response=publicPage.waitForResponse(r=>r.url().endsWith("/api/public/book")&&r.request().method()==="POST");await publicPage.getByTestId("confirm-booking-code").click();const bookResponse=await response;expect(bookResponse.status()).toBe(200);appointments.push((await bookResponse.json()).appointmentId);
-    await expect(publicPage.locator(".booking-success")).toContainText(customer);
+    await expect(publicPage.locator(".booking-success")).toContainText("РЕЗЕРВАЦИЯТА Е УСПЕШНА");
     return {date,time};
    }finally{await visitor.close()}
   }
@@ -87,7 +111,10 @@ test("deep: second specialist, independent same-time bookings and waitlists",asy
    const visitor=await browser.newContext();const publicPage=await visitor.newPage();
    try{await publicPage.goto(`/salon/${slug}`);await settle(publicPage);
     await publicPage.locator(".booking-box form select").first().selectOption(services![0].id);await publicPage.locator(".booking-box form select").nth(1).selectOption(staff);
-    let day=publicPage.locator(".booking-calendar-grid button.day-available:not([disabled])").first();for(let i=0;i<4&&!(await day.isVisible().catch(()=>false));i++)await publicPage.locator(".booking-calendar-head button").last().click();await expect(day).toBeVisible();await day.click();
+    let days=publicPage.locator(".booking-calendar-grid button.day-available:not([disabled])");
+    for(let i=0;i<4&&(await days.count())<2;i++){await publicPage.locator(".booking-calendar-head button").last().click();days=publicPage.locator(".booking-calendar-grid button.day-available:not([disabled])")}
+    expect(await days.count(),"Waitlist test needs a future available day").toBeGreaterThan(1);
+    const day=days.nth(1);await expect(day).toBeVisible();await day.click();
     await publicPage.getByRole("button",{name:/Запиши ме в списък за изчакване/}).click();
     const form=publicPage.locator('[data-testid="waitlist-form"]');
     await form.locator('[name="customerName"]').fill(`E2E wait ${staff.slice(0,6)} ${stamp}`);
@@ -97,15 +124,25 @@ test("deep: second specialist, independent same-time bookings and waitlists",asy
    }finally{await visitor.close()}
   }
   const{data:waits}=await db.from("waitlist_entries").select("id").eq("salon_id",salon!.id).like("customer_name",`E2E wait % ${stamp}`);waitIds.push(...(waits||[]).map(x=>x.id));expect(waitIds).toHaveLength(2);
-  await page.goto("/admin/waitlist");await settle(page);await expect(page.locator(".bf-waitlist-admin article")).toHaveCount(2);
-  await staffPage.goto("/admin/waitlist");await settle(staffPage);await expect(staffPage.locator(".bf-waitlist-admin article")).toHaveCount(2);
-  const row=page.locator(".bf-waitlist-admin article").first();await row.getByRole("button",{name:"Провери свободни"}).click();await expect(row.locator(".bf-waitlist-slots button").first()).toBeVisible();
+  await page.goto("/admin/waitlist");await settle(page);
+  const ownerTestRows=page.locator(".bf-waitlist-admin article").filter({hasText:String(stamp)});
+  await expect(ownerTestRows).toHaveCount(2);
+  await staffPage.goto("/admin/waitlist");await settle(staffPage);
+  const staffTestRows=staffPage.locator(".bf-waitlist-admin article").filter({hasText:String(stamp)});
+  await expect(staffTestRows).toHaveCount(1);
+  const row=ownerTestRows.first();
+  const checkDay=row.getByRole("combobox",{name:"Ден за проверка"});
+  const options=await checkDay.locator("option").allTextContents();
+  expect(options.length,"Waitlist must offer at least one day to check").toBeGreaterThan(0);
+  if(options.length>1)await checkDay.selectOption({index:options.length-1});
+  await row.getByRole("button",{name:"Провери свободни"}).click();
+  await expect(row.locator(".bf-waitlist-slots button").first()).toBeVisible({timeout:15000});
   await row.locator(".bf-waitlist-slots button").first().click();await row.getByRole("button",{name:"Потвърди записването"}).click();
-  await expect(page.locator(".bf-waitlist-admin article")).toHaveCount(1);
+  await expect(ownerTestRows).toHaveCount(1);
   const{data:assigned}=await db.from("waitlist_entries").select("appointment_id").in("id",waitIds).eq("status","booked").maybeSingle();
   if(assigned?.appointment_id)appointments.push(assigned.appointment_id);
-  page.once("dialog",d=>d.accept());await page.locator(".bf-waitlist-admin article").first().getByRole("button",{name:"Премахни"}).click();
-  await expect(page.locator(".bf-waitlist-admin article")).toHaveCount(0);
+  page.once("dialog",d=>d.accept());await ownerTestRows.first().getByRole("button",{name:"Премахни"}).click();
+  await expect(ownerTestRows).toHaveCount(0);
  }finally{
   await context.close();
   const{data:unfinishedWaits}=await db.from("waitlist_entries").select("id,appointment_id").eq("salon_id",salon!.id).like("customer_name",`E2E wait % ${stamp}`);

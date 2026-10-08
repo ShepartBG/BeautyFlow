@@ -1,0 +1,25 @@
+"use client";
+import{useEffect,useMemo,useState}from"react";
+import AdminShell from"@/components/admin/AdminShell";
+import AdminDatePicker from"@/components/AdminDatePicker";
+import LoadingScreen from"@/components/LoadingScreen";
+import{useBusiness}from"@/lib/beautyflow/useBusiness";
+import{isoToday}from"@/lib/beautyflow/date";
+import{supabase}from"@/lib/supabase";
+export default function SalonOverview(){
+ const{business,loading:businessLoading,isOwner}=useBusiness();const initialDate=()=>{if(typeof window==="undefined")return isoToday();const q=new URLSearchParams(window.location.search).get("date");return q&&/^\d{4}-\d{2}-\d{2}$/.test(q)?q:isoToday()};const[date,setDate]=useState(initialDate);const[list,setList]=useState<any[]>([]);const[loading,setLoading]=useState(true);const[staffFilter,setStaffFilter]=useState("all");const[deleting,setDeleting]=useState("");
+ async function token(){const{data:{session}}=await supabase.auth.getSession();return session?.access_token||""}
+ async function load(){if(!business||!isOwner){setList([]);setLoading(false);return}setLoading(true);try{const t=await token();if(!t)throw new Error("Няма активна сесия.");const qs=new URLSearchParams({salonId:business.id,date});const r=await fetch(`/api/business/calendar-day?${qs.toString()}`,{headers:{Authorization:`Bearer ${t}`},cache:"no-store"});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||"Общият преглед не можа да се зареди.");setList((j.appointments||[]).filter((a:any)=>a.status!=="cancelled"))}catch(e){console.error("BeautyFlow salon overview failed",e);setList([])}finally{setLoading(false)}}
+ useEffect(()=>{void load()},[business,date,isOwner]);
+ const staff=useMemo(()=>Array.from(new Map(list.filter(a=>a.staff_id).map(a=>[a.staff_id,a.staff?.name||"Специалист"])).entries()),[list]);
+ const visible=staffFilter==="all"?list:list.filter(a=>a.staff_id===staffFilter);
+ const revenue=visible.reduce((sum,a)=>sum+Number(a.services?.price||0),0),clients=new Set(visible.map(a=>String(a.customer_phone_normalized||a.customer_phone||a.customer_name))).size;
+ async function del(a:any){if(!business||!confirm(`Да изтрием ли часа на ${a.customer_name} в ${String(a.start_time).slice(0,5)} при ${a.staff?.name||"специалиста"}?`))return;setDeleting(a.id);try{const t=await token();const r=await fetch("/api/business/appointment",{method:"DELETE",headers:{"Content-Type":"application/json",Authorization:`Bearer ${t}`},body:JSON.stringify({salonId:business.id,appointmentId:a.id})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||"Не успяхме да изтрием часа.");await load()}catch(e){alert(e instanceof Error?e.message:"Не успяхме да изтрием часа.")}finally{setDeleting("")}}
+ if(businessLoading||(business&&loading))return <LoadingScreen title="Зареждане..." subtitle="Събираме данните за салона"/>;
+ if(!isOwner)return <AdminShell><div className="dash-empty">Тази секция е достъпна само за собственика.</div></AdminShell>;
+ return <AdminShell><header className="dash-header"><div><span className="eyebrow">САЛОН · ОБЩ ПРЕГЛЕД</span><h1>Всички клиенти и специалисти</h1><p>Тук виждаш целия салон. Личните „Начало“, „Календар“, „Записвания“ и камбанката показват само твоите клиенти.</p></div><AdminDatePicker className="date-control-bg" value={date} onChange={setDate}/></header>
+ <section className="dash-card"><div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}><b>Покажи:</b><select value={staffFilter} onChange={e=>setStaffFilter(e.target.value)} style={{minHeight:44,borderRadius:11,padding:"8px 12px"}}><option value="all">Всички специалисти</option>{staff.map(([id,name])=><option key={String(id)} value={String(id)}>{String(name)}</option>)}</select></div></section>
+ <div className="kpi-grid"><div><span>Записвания</span><strong>{visible.length}</strong></div><div><span>Клиенти</span><strong>{clients}</strong></div><div><span>Очакван оборот</span><strong>{revenue.toFixed(0)} €</strong></div><div><span>Специалисти с часове</span><strong>{new Set(visible.map(a=>a.staff_id).filter(Boolean)).size}</strong></div></div>
+ <section className="dash-card"><div className="booking-list">{visible.length===0?<div className="dash-empty">Няма записвания за тази дата.</div>:visible.map(a=><div key={a.id} className={`booking-row status-${a.status}`}><time>{String(a.start_time).slice(0,5)}</time><section><b className="booking-service-name">{a.services?.name||"Услуга"}</b><span className="booking-customer-name">{a.customer_name}</span><small>{a.customer_phone}{a.customer_email?` · ${a.customer_email}`:""}</small>{a.note&&<div className="appointment-note appointment-note-visible compact"><b>📝 Подробности</b><p>{a.note}</p></div>}</section><strong>{Number(a.services?.price||0).toFixed(0)} €</strong><span className="booking-status-badge">{a.staff?.name||"Без специалист"}</span><button type="button" className="booking-delete-btn" disabled={deleting===a.id} onClick={()=>del(a)}>{deleting===a.id?"...":"Изтрий"}</button></div>)}</div></section>
+ </AdminShell>
+}

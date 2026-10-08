@@ -12,7 +12,8 @@ export async function POST(req:Request){
   const db=auth.admin;
   const{data:w,error:waitError}=await db.from("waitlist_entries").select("*").eq("id",id).eq("salon_id",auth.business.id).eq("status","waiting").maybeSingle();if(waitError)throw waitError;
   if(!w)return NextResponse.json({message:"Заявката вече не е активна."},{status:409});
-  const staffId=String(body.staffId||w.staff_id||"");
+  if(auth.role==="staff"&&(!auth.staffId||w.staff_id!==auth.staffId))return NextResponse.json({message:"Нямаш достъп до този запис в списъка."},{status:403});
+  const staffId=auth.role==="staff"?auth.staffId!:String(body.staffId||w.staff_id||"");
   if(auth.role==="staff"&&auth.staffId!==staffId)return NextResponse.json({message:"Можеш да записваш клиенти само в своя график."},{status:403});
   if(!/^[0-9a-f-]{36}$/i.test(staffId))return NextResponse.json({message:"Избери час със специалист."},{status:400});
   const{data:appointmentId,error}=await db.rpc("beautyflow_assign_waitlist",{p_salon:auth.business.id,p_entry:id,p_staff:staffId,p_date:date,p_time:time});

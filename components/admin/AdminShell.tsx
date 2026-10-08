@@ -5,8 +5,8 @@ import{useEffect,useRef,useState}from"react";
 import{supabase}from"@/lib/supabase";
 import{useBusiness}from"@/lib/beautyflow/useBusiness";
 import AdminNotifications from"@/components/admin/AdminNotifications";
-const ownerLinks=[["/admin","Начало"],["/admin/calendar","Календар"],["/admin/bookings","Записвания"],["/admin/waitlist","Изчакване"],["/admin/services","Услуги"],["/admin/staff","Екип"],["/admin/customers","Клиенти"],["/admin/schedule","График"],["/admin/my-profile","Моят профил"],["/admin/settings","Профил"]];
-const staffLinks=[["/admin","Начало"],["/admin/calendar","Календар"],["/admin/bookings","Записвания"],["/admin/schedule","График"],["/admin/my-profile","Моят профил"]];
+const ownerLinks=[["/admin","Начало"],["/admin/overview","Общ преглед"],["/admin/calendar","Календар"],["/admin/bookings","Записвания"],["/admin/waitlist","Изчакване"],["/admin/services","Услуги"],["/admin/staff","Екип"],["/admin/customers","Клиенти"],["/admin/schedule","График"],["/admin/my-profile","Моят профил"],["/admin/settings","Профил"]];
+const staffLinks=[["/admin","Начало"],["/admin/calendar","Календар"],["/admin/bookings","Записвания"],["/admin/waitlist","Изчакване"],["/admin/schedule","График"],["/admin/my-profile","Моят профил"]];
 export default function AdminShell({children}:{children:React.ReactNode}){
  const path=usePathname(),router=useRouter(),{business,isOwner}=useBusiness(),[menu,setMenu]=useState(false),ref=useRef<HTMLDivElement>(null);const links=isOwner?ownerLinks:staffLinks;const theme=(path.split("/")[2]||"home").replace(/[^a-z-]/g,"");
  useEffect(()=>{const close=(e:MouseEvent)=>{if(ref.current&&!ref.current.contains(e.target as Node))setMenu(false)};document.addEventListener("mousedown",close);return()=>document.removeEventListener("mousedown",close)},[]);

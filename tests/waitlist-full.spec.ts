@@ -106,14 +106,14 @@ test("waitlist -> admin -> assign slot -> calendar -> cleanup", async ({page,bas
   expect(aj.ok).toBe(true);
   await expect(page.locator(".bf-waitlist-admin article").filter({hasText:name})).toHaveCount(0,{timeout:15000});
 
-  await page.goto("/admin/calendar"); await settle(page); await chooseAdminDate(page,date);
-  const appointment=page.locator(".calendar-appointment").filter({hasText:name}).first();
-  await expect(appointment,"Waitlist клиентът не се появи в календара след назначаване.").toBeVisible({timeout:15000});
+  await page.goto(`/admin/overview?date=${date}`); await settle(page);
+  const appointment=page.locator(".booking-row").filter({hasText:name}).first();
+  await expect(appointment,"Waitlist клиентът не се появи в Общ преглед след назначаване.").toBeVisible({timeout:15000});
   await expect(appointment).toContainText(serviceName);
   await expect(appointment).toContainText(time);
 
   page.once("dialog",async d=>{ await d.accept(); });
-  await appointment.getByRole("button",{name:"Изтрий часа"}).click();
+  await appointment.getByRole("button",{name:"Изтрий"}).click();
   await expect(appointment).toHaveCount(0,{timeout:15000});
   if(isOnline(baseURL)) expect(aj.emailSent, "Часът е записан и изчистен, но сървърът не отчете успешно изпращане на имейла.").toBe(true);
   await verify();
