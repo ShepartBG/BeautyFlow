@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { activeAnnouncement } from "@/lib/beautyflow/announcement";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,10 @@ export async function GET(req: Request) {
     ]);
     const failure = [services, staff, links, gallery].find(result => result.error);
     if (failure?.error) throw failure.error;
-    return NextResponse.json({ salon, services: services.data || [], staff: staff.data || [], links: links.data || [], gallery: gallery.data || [] }, { headers: { "Cache-Control": "no-store" } });
+    // Announcement columns are optional: until the migration runs this query fails and nothing is shown.
+    const ann = await db.from("salons").select("announcement_text,announcement_type,announcement_until").eq("id", salon.id).maybeSingle();
+    const announcement = ann.error ? null : activeAnnouncement(ann.data);
+    return NextResponse.json({ salon, announcement, services: services.data || [], staff: staff.data || [], links: links.data || [], gallery: gallery.data || [] }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Public salon load failed", error);
     return NextResponse.json({ message: "Не успяхме да заредим салона. Опитай отново." }, { status: 500 });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { activeAnnouncement } from "@/lib/beautyflow/announcement";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,11 @@ export async function GET(req:Request){
     if(search)query=query.or(`name.ilike.%${search}%,city.ilike.%${search}%,description.ilike.%${search}%`);
     const {data,error,count}=await query.order("created_at",{ascending:false}).order("id",{ascending:false}).range((page-1)*PAGE_SIZE,page*PAGE_SIZE-1);
     if(error) throw error;
-    return NextResponse.json({salons:data||[],total:count||0,page,pageSize:PAGE_SIZE},{headers:{"Cache-Control":"no-store"}});
+    const ids=(data||[]).map(s=>s.id);
+    const ann=ids.length?await db.from("salons").select("id,announcement_text,announcement_type,announcement_until").in("id",ids):{data:[],error:null};
+    const byId=new Map((ann.error?[]:ann.data||[]).map((a:any)=>[a.id,activeAnnouncement(a)]));
+    const salons=(data||[]).map(s=>({...s,announcement:byId.get(s.id)||null}));
+    return NextResponse.json({salons,total:count||0,page,pageSize:PAGE_SIZE},{headers:{"Cache-Control":"no-store"}});
   }catch(e){
     return NextResponse.json({salons:[],message:e instanceof Error?e.message:"Грешка при зареждане на салоните."},{status:500});
   }
