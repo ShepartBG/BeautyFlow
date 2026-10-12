@@ -2,13 +2,18 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { unstable_cache } from "next/cache";
 import { optimizedDesignBackground } from "@/lib/optimizedDesignBackground";
+import { Manrope } from "next/font/google";
 import "./globals.css";
+import "./beautyflow-polish.css";
+import "./beautyflow-motion.css";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import PublicDesignLayer from "@/components/PublicDesignLayer";
 import BulgarianFormGuard from "@/components/BulgarianFormGuard";
 import GlobalPageLoader from "@/components/GlobalPageLoader";
 import CookieBanner from "@/components/CookieBanner";
 import ScrollResetOnRefresh from "@/components/ScrollResetOnRefresh";
+
+const bfSans = Manrope({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "600", "700", "800"], display: "swap", variable: "--bf-font-sans" });
 
 export const dynamic = "force-dynamic";
 
@@ -39,5 +44,5 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     "--bf-global-bg-position":design.background_position,
     "--bf-global-overlay":"0",
   } as CSSProperties;
-  return <html lang="bg" style={vars}><body data-bf-design-loaded="1"><PublicDesignLayer/><BulgarianFormGuard/><ScrollResetOnRefresh/><GlobalPageLoader/><div className="bf-app-content">{children}</div><CookieBanner/></body></html>;
+  return <html lang="bg" style={vars} className={bfSans.variable}><body data-bf-design-loaded="1"><PublicDesignLayer/><BulgarianFormGuard/><ScrollResetOnRefresh/><GlobalPageLoader/><div className="bf-app-content">{children}</div><CookieBanner/></body></html>;
 }

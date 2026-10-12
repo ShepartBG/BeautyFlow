@@ -1,0 +1,176 @@
+/* BeautyFlow polish layer — visual-only refinements loaded after globals.css.
+   No layout logic or behaviour lives here; every rule is a targeted fix. */
+
+/* Typography: the site declared Inter/Arial but never loaded a web font,
+   so everything rendered in Arial. Manrope (with Cyrillic) is loaded via next/font. */
+html body,
+html body button,
+html body input,
+html body select,
+html body textarea {
+  font-family: var(--bf-font-sans), "Segoe UI", Roboto, Arial, sans-serif !important;
+  /* lang="bg" switches Manrope to Bulgarian letterforms (в→B, т→m, д→g); keep the standard Cyrillic shapes. */
+  font-feature-settings: "locl" 0 !important;
+}
+html body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+html body :is(time, .price, [class*="price"]) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keyboard focus was invisible on most controls. */
+html body :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #b48cf0 !important;
+  outline-offset: 2px !important;
+}
+
+/* Long unbroken words (addresses, descriptions) pushed content off-screen on phones. */
+.salon-profile-hero :is(h1, p, span, b, a),
+.profile-meta,
+.profile-meta *,
+.bf-salon-description,
+.service-public-card,
+.bf-salon-team-info {
+  overflow-wrap: anywhere;
+}
+
+/* Salon page: booking card matches the width of the sections below it. */
+@media (min-width: 900px) {
+  .booking-box { max-width: 900px !important; }
+}
+
+/* Team list: action buttons sat on top of the specialist's name.
+   Put them on their own row under the name. */
+.bf-staff-manage > div {
+  grid-template-columns: 54px minmax(0, 1fr) !important;
+  row-gap: 10px !important;
+}
+.bf-staff-manage > div > .bf-staff-actions {
+  grid-column: 1 / -1 !important;
+  position: static !important;
+  justify-content: flex-start !important;
+  padding-left: 66px !important;
+}
+.bf-staff-manage > div > .bf-staff-actions button { white-space: nowrap; }
+.bf-staff-manage section b { font-size: 15px !important; }
+.bf-staff-manage section span { font-size: 12.5px !important; }
+@media (max-width: 560px) {
+  .bf-staff-manage > div > .bf-staff-actions { padding-left: 0 !important; }
+  .bf-staff-manage > div > .bf-staff-actions button { flex: 1 1 auto; }
+}
+
+/* File inputs showed the bare browser control. */
+html body input[type="file"] {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  font-size: 13.5px !important;
+  cursor: pointer;
+}
+html body input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #7b52d6, #5b3a9e);
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+  transition: filter .18s ease;
+}
+html body input[type="file"]::file-selector-button:hover { filter: brightness(1.12); }
+
+/* Specialists directory: search + filter were wider than the phone screen. */
+.directory-tools { min-width: 0; max-width: 100%; }
+.directory-tools > * { min-width: 0 !important; max-width: 100% !important; }
+@media (max-width: 640px) {
+  .directory-tools { display: grid !important; grid-template-columns: 1fr !important; gap: 10px !important; }
+  .directory-tools .directory-search,
+  .directory-tools .bf-specialist-filter { width: 100% !important; }
+}
+
+/* Home hero (phone): the two main buttons wrapped onto 2–3 lines each. */
+@media (max-width: 560px) {
+  .bf-v230-actions { display: grid !important; grid-template-columns: 1fr !important; gap: 10px !important; }
+  .bf-v230-actions .bf-v230-btn { width: 100% !important; min-height: 52px !important; justify-content: center !important; white-space: nowrap; }
+}
+
+/* Home categories (phone): the arrow overlapped longer labels such as "Миглопластика". */
+.bf-v230-category-copy { display: flex !important; align-items: center !important; gap: 8px !important; }
+.bf-v230-category-copy h3 { min-width: 0; flex: 1 1 auto; }
+.bf-v230-category-copy i { flex: none !important; position: static !important; }
+@media (max-width: 560px) {
+  .bf-v230-category-copy h3 { font-size: 13px !important; line-height: 1.2 !important; letter-spacing: -.01em !important; }
+}
+
+/* Smoother, consistent hover feedback on primary buttons and cards. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .bf-v230-btn, .btn, .bf3-button { transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s ease, filter .2s ease !important; }
+  .bf-v230-btn:hover, .btn:hover { transform: translateY(-1px); }
+  .bf-v230-category, .bf-salon-card, .salon-card { transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease !important; }
+  .bf-v230-category:hover { transform: translateY(-4px); }
+}
+
+/* Big headings use very tight tracking; give words a little more room. */
+html body :is(h1, h2) { word-spacing: .05em; }
+
+/* ── Gallery ordering (settings) ── */
+.bf-gallery-item { cursor: grab; transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease, outline-color .2s ease; outline: 2px dashed transparent; outline-offset: -2px; }
+.bf-gallery-item:active { cursor: grabbing; }
+.bf-gallery-item.is-dragging { opacity: .45; transform: scale(.96); }
+.bf-gallery-item.is-drop-target { outline-color: #b48cf0; box-shadow: 0 0 0 4px rgba(180, 140, 240, .25); }
+.bf-gallery-pos {
+  position: absolute; left: 7px; top: 7px; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 13px;
+  display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff; background: rgba(35, 27, 42, .85); pointer-events: none;
+}
+.bf-gallery-order { position: absolute; left: 7px; right: 7px; bottom: 7px; display: flex; justify-content: space-between; gap: 6px; }
+.bf-gallery-order button {
+  width: 34px; height: 34px; border: 0; border-radius: 50%; cursor: pointer;
+  background: rgba(35, 27, 42, .85); color: #fff; font-size: 16px; font-weight: 800; line-height: 1;
+  transition: background .2s ease, transform .2s ease;
+}
+.bf-gallery-order button:hover:not(:disabled) { background: #7b52d6; transform: scale(1.08); }
+.bf-gallery-order button:disabled { opacity: .3; cursor: default; }
+.bf-gallery-order-msg { margin-top: 10px; }
+
+/* ── Salon announcement (public profile, salon list, settings) ── */
+.bf-salon-announcement {
+  --ann: #8b5cf6; --ann-bg: rgba(139, 92, 246, .12);
+  position: relative; z-index: 3; display: flex; gap: 14px; align-items: flex-start;
+  width: min(calc(100% - 32px), 900px); margin: 18px auto 0; padding: 16px 18px;
+  border-radius: 18px; border: 1px solid color-mix(in srgb, var(--ann) 45%, transparent);
+  border-left: 5px solid var(--ann);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .96), rgba(246, 240, 252, .94));
+  box-shadow: 0 16px 40px rgba(40, 20, 70, .22);
+  color: #231d2b;
+}
+.bf-salon-announcement .bf-ann-icon { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: var(--ann-bg); }
+.bf-salon-announcement b { display: block; font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--ann); }
+.bf-salon-announcement p { margin: 3px 0 0; font-size: 15.5px; line-height: 1.5; font-weight: 600; overflow-wrap: anywhere; }
+.bf-salon-announcement small { display: block; margin-top: 6px; font-size: 12.5px; color: #6f6678; }
+.bf-ann-prices { --ann: #b7791f; --ann-bg: rgba(214, 158, 46, .16); }
+.bf-ann-closed { --ann: #4a6fa5; --ann-bg: rgba(74, 111, 165, .14); }
+.bf-ann-promo { --ann: #c2417a; --ann-bg: rgba(214, 63, 133, .13); }
+@media (prefers-reduced-motion: no-preference) {
+  .bf-salon-announcement { animation: bfm-rise .7s cubic-bezier(.22, 1, .36, 1) both .15s; }
+  .bf-salon-announcement .bf-ann-icon { animation: bf-ann-nudge 2.6s ease-in-out 1s 2; }
+}
+@keyframes bf-ann-nudge { 0%, 100% { transform: none; } 20% { transform: rotate(-10deg) scale(1.08); } 40% { transform: rotate(8deg); } 60% { transform: none; } }
+@media (max-width: 560px) { .bf-salon-announcement { margin-top: 12px; padding: 14px; gap: 11px; } .bf-salon-announcement p { font-size: 14.5px; } }
+
+.bf-salon-card-announcement {
+  --ann: #8b5cf6;
+  margin: 8px 0 0; padding: 8px 11px; border-radius: 11px; font-size: 13px; line-height: 1.4;
+  background: color-mix(in srgb, var(--ann) 16%, transparent); border: 1px solid color-mix(in srgb, var(--ann) 40%, transparent);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere;
+}
+.bf-salon-card-announcement.bf-ann-prices { --ann: #d69e2e; }
+.bf-salon-card-announcement.bf-ann-closed { --ann: #6b8fc7; }
+.bf-salon-card-announcement.bf-ann-promo { --ann: #e0559a; }
+
+.bf-announcement-form { display: grid; gap: 12px; }
+.bf-announcement-form textarea { resize: vertical; min-height: 84px; }
+.bf-announcement-actions { display: flex; flex-wrap: wrap; gap: 10px; }

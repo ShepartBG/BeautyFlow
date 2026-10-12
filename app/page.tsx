@@ -4,6 +4,7 @@ import PublicNav from "@/components/PublicNav";
 import Footer from "@/components/Footer";
 import ScrollReveal from "@/components/ScrollReveal";
 import PricingSection from "@/components/PricingSection";
+import HeroSparkles from "@/components/HeroSparkles";
 
 const categories = [
   { title: "Фризьорски салони", image: "/brand/bf-cat-hair.jpg", category: "hair" },
@@ -47,7 +48,7 @@ const realPhotos = {
 function photoSrcSet(url:string){return `${url.replace(/w=1600/,"w=480")} 480w, ${url.replace(/w=1600/,"w=960")} 960w, ${url} 1600w`}
 
 export default function Home(){return <main className="page bf-public-page bf-v230-home bf-home-refined"><link rel="preload" as="image" media="(max-width:820px)" href="https://images.pexels.com/photos/7750091/pexels-photo-7750091.jpeg?auto=compress&cs=tinysrgb&w=900" fetchPriority="high"/><link rel="preload" as="image" media="(min-width:821px)" href="https://images.pexels.com/photos/7750091/pexels-photo-7750091.jpeg?auto=compress&cs=tinysrgb&w=1800" fetchPriority="high"/><ScrollReveal/><PublicNav/>
-<section className="bf-v230-hero bf-cinematic-section"><div className="bf-v230-hero-inner bf-v256-hero-surface"><div className="bf-v230-copy">
+<section className="bf-v230-hero bf-cinematic-section"><div className="bf-v230-hero-inner bf-v256-hero-surface"><HeroSparkles/><div className="bf-v230-copy">
 <span className="bf-v230-kicker">ПРОФЕСИОНАЛНА СИСТЕМА ЗА ЗАПИСВАНИЯ</span>
 <h1><span className="bf-outline-word">Контрол</span><br/>върху времето.<br/><strong className="bf-outline-word bf-outline-purple">Свобода</strong><br/>за стила.</h1>
 <p>BeautyFlow свързва клиенти и beauty бизнеси в една система — онлайн записване, реален график, услуги, екип, клиенти, почивки и управление от едно място.</p>
@@ -56,6 +57,7 @@ export default function Home(){return <main className="page bf-public-page bf-v2
 <div className="bf-v230-phone-stage bf-phone-showcase-real"><Image src="/brand/beautyflow-admin-phone-v257.webp" alt="BeautyFlow мобилен бизнес панел" width={896} height={1792} priority className="bf-real-phone-image"/></div>
 
 </div></section>
+<div className="bfm-marquee" aria-hidden="true"><div className="bfm-marquee-track">{[0,1].map(k=><div key={k} className="bfm-marquee-group">{["Онлайн записване","Фризьорски салони","Умен график","Барбър","Имейл известия","Маникюр","Миглопластика","Контрол на бизнеса","Масажи"].map(t=><span key={t}>{t}<i>✦</i></span>)}</div>)}</div></div>
 
 <section className="bf-home-scale-intro bf-cinematic-section">
   <div className="bf-home-scale-copy"><span>ЕДНА ПЛАТФОРМА · ЦЕЛИЯТ ПРОЦЕС</span><h2>От намирането на салон до последния свободен час в графика.</h2><p>Клиентът избира подходящ салон, разглежда услугите и запазва час. Бизнесът управлява работното време, услугите, екипа, клиентите и записванията без хаос и без разпиляна информация.</p></div>
