@@ -32,7 +32,9 @@
     "test:master:full": "node --env-file=.env.local --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/master-lifecycle.spec.ts tests/master-owner-full.spec.ts tests/deep-media.spec.ts tests/deep-team-booking.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium",
     "test:master:full:headed": "node --env-file=.env.local --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/master-lifecycle.spec.ts tests/master-owner-full.spec.ts tests/deep-media.spec.ts tests/deep-team-booking.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium --headed",
     "test:master:v3": "node --env-file=.env.local --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/master-lifecycle.spec.ts tests/master-owner-v3.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium",
-    "test:master:final": "node --env-file=.env.local --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/master-lifecycle.spec.ts tests/master-owner-v4.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium"
+    "test:master:final": "node --env-file=.env.local --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test tests/master-lifecycle.spec.ts tests/master-owner-v4.spec.ts tests/booking-full.spec.ts tests/waitlist-full.spec.ts --project=chromium",
+    "test:full-system": "node --env-file=.env.local --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test --config=playwright.full.config.ts",
+    "test:full-system:headed": "node --env-file=.env.local --env-file=.env.test.local ./node_modules/@playwright/test/cli.js test --config=playwright.full.config.ts --headed"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.108.2",

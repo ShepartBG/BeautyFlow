@@ -43,3 +43,6 @@ next-env.d.ts
 playwright/.auth/
 playwright-report/
 test-results/
+
+# full system test report
+full-system-report/
