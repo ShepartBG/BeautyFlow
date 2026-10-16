@@ -7,6 +7,8 @@ import {
   sofiaToday, addDays, weekday, nextWeekday,
 } from "./full-system/lib";
 import { bulgarianHolidays } from "../lib/beautyflow/bulgarianHolidays";
+import { sofiaToUtc } from "../lib/beautyflow/calendarEvent";
+const sofiaToUtcIso = (date: string, time: string) => sofiaToUtc(date, time).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
 /*
   BeautyFlow — full system test (release gate).
@@ -798,6 +800,26 @@ test("BeautyFlow — пълен системен тест", async ({ browser, ba
       await expect(ok).toContainText(firstTime);
       await expect(ok.locator('a[href*="google.com/maps"]')).toBeVisible();
     });
+    await step("14.11", async () => {
+      const href = await pp.getByTestId("add-to-google-calendar").getAttribute("href");
+      const u = new URL(href!);
+      expect(u.host).toBe("calendar.google.com");
+      expect(u.searchParams.get("dates")!.split("/")[0]).toBe(sofiaToUtcIso(dBook, firstTime));
+      expect(u.searchParams.get("text")).toBe(`${SERVICE_A} · ${BUSINESS}`);
+      return `Google Календар: ${u.searchParams.get("dates")}`;
+    });
+    await step("14.10", async () => {
+      const resp = waitResp(pp, (r) => r.url().includes("/api/public/booking-ics"));
+      await pp.getByTestId("add-to-calendar").click().catch(() => {});
+      const r = await resp;
+      expect(r.status()).toBe(200);
+      expect(r.headers()["content-type"]).toContain("text/calendar");
+      const ics = (await (await api.get(r.url())).text()).replace(/\r\n /g, "");
+      const startUtc = sofiaToUtcIso(dBook, firstTime);
+      for (const k of ["UID:", "DTSTAMP:", `DTSTART:${startUtc}`, "TRIGGER:-P1D", "TRIGGER:-PT2H", `SUMMARY:${SERVICE_A} · ${BUSINESS}`]) expect(ics, k).toContain(k);
+      await pp.goto(`/salon/${S.slug}`).catch(() => {});
+      return `Файл .ics: начало ${dBook} ${firstTime} (${startUtc}), напомняния ден преди и 2 часа преди`;
+    });
     await step(["7.12", "11.03", "11.08"], async () => {
       const m = await waitForEmail(cust1.email, /часът Ви в .* е потвърден|запазен час/i, started);
       const body = await recordEmailLinks(m.id);
@@ -1077,7 +1099,9 @@ test("BeautyFlow — пълен системен тест", async ({ browser, ba
     // ════════ 12. Dashboard and subscription ════════
     console.log("\n▶ 12. Начален панел, собственик и абонамент");
     await step(["12.01", "12.02", "12.03", "12.04"], async () => {
-      const dHome = nextWeekday(1, [1, 2, 3, 4, 5], [dMon, dBreak, dOff, dBook]);
+      // The home page shows today + 6 days: pick a free workday inside that window (dBook as a last resort).
+      const week = [1, 2, 3, 4, 5, 6].map((n) => addDays(today, n)).filter((d) => [1, 2, 3, 4, 5].includes(weekday(d)));
+      const dHome = week.find((d) => ![dMon, dBreak, dOff, dBook, dVac1, dVac2].includes(d)) || dBook;
       const own = await bookWithCode(api, { salonId: S.salonId, serviceId: S.serviceA, staffId: S.ownerStaff, date: dHome, startTime: "11:00", name: "Клиент Начало", phone: phone(), email: inbox("home") });
       expect(own.status, own.body.message).toBe(200);
       await ap.goto("/admin"); await settle(ap, 2500);

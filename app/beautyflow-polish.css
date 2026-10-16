@@ -174,3 +174,13 @@ html body :is(h1, h2) { word-spacing: .05em; }
 .bf-announcement-form { display: grid; gap: 12px; }
 .bf-announcement-form textarea { resize: vertical; min-height: 84px; }
 .bf-announcement-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Loading screen logo: an old rule hue-rotated ".loading-box img" (meant for a previous pink logo),
+   which turned today's violet logo blue. Show it exactly like the logo in the header. */
+.loading-box img.bf-loader-exact-logo { filter: none !important; }
+
+/* Booking confirmation: calendar buttons */
+.bf-calendar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.bf-calendar-actions .btn { width: 100%; justify-content: center; text-align: center; }
+.bf-calendar-hint { margin: 2px 0 0; font-size: 12.5px; opacity: .75; text-align: center; }
+@media (max-width: 420px) { .bf-calendar-actions { grid-template-columns: 1fr; } }

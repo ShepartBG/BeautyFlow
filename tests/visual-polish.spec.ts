@@ -36,6 +36,22 @@ test.describe("typography", () => {
   });
 });
 
+test("loading screen logo keeps its real colours", async ({ page }) => {
+  await page.goto("/");
+  await settle(page);
+  // Same markup as components/LoadingScreen.tsx; an old ".loading-box img" hue-rotate once turned it blue.
+  const filter = await page.evaluate(() => {
+    const box = document.createElement("div");
+    box.className = "loading-box bf-loader-clean bf-loader-premium";
+    box.innerHTML = '<div class="bf-loader-orbit"><img class="bf-loader-exact-logo" src="/beautyflow-logo-circle.webp" alt=""></div>';
+    document.body.appendChild(box);
+    const value = getComputedStyle(box.querySelector("img")!).filter;
+    box.remove();
+    return value;
+  });
+  expect(filter).toBe("none");
+});
+
 test.describe("phone layout", () => {
   test.use(phone);
 
