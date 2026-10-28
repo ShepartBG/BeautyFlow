@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SiteSignature from "@/components/SiteSignature";
 
 export default function BFFooter() {
   return (
@@ -17,6 +18,7 @@ export default function BFFooter() {
         <span>© 2026 BeautyFlow. Всички права запазени.</span>
         <div><Link href="/terms">Общи условия</Link><Link href="/privacy">Политика за поверителност</Link></div>
       </div>
+      <SiteSignature />
     </footer>
   );
 }
