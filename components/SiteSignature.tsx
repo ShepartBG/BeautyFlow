@@ -3,7 +3,7 @@ export default function SiteSignature() {
   return (
     <p style={{ margin: 0, padding: "10px 16px", textAlign: "right", fontSize: 12, lineHeight: 1.2 }}>
       <a
-        href="https://hristian-ivanov.netlify.app/"
+        href="https://hristiyan-ivanov.pages.dev/"
         target="_blank"
         rel="noopener noreferrer"
         style={{ color: "inherit", opacity: 0.7, textDecoration: "none" }}
