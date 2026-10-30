@@ -36,3 +36,30 @@ export function bookingVerificationEmail(x:{code:string;salonName:string}){retur
 
 export function passwordRecoveryEmail(x:{url:string}){return {subject:"BeautyFlow — възстановяване на парола",text:`Получихме заявка за нова парола. Отвори ${x.url}\nАко не си изпращал заявката, игнорирай този имейл.`,html:layout("Възстанови паролата си","Линк за нова парола в BeautyFlow.",'<p style="color:#66565f;line-height:1.7">Получихме заявка за възстановяване на паролата за твоя BeautyFlow профил. Натисни бутона, за да зададеш нова парола.</p><p style="color:#66565f;line-height:1.7">Ако не си изпращал тази заявка, игнорирай този имейл.</p>',{label:"Задай нова парола",url:x.url})}}
 export function staffInvitationEmail(x:{url:string;name:string;salonName:string}){return {subject:`BeautyFlow — покана за екипа на ${x.salonName}`,text:`Здравей, ${x.name}! Поканен/а си в екипа на ${x.salonName}. Отвори ${x.url}, за да зададеш парола и да влезеш в профила си.`,html:layout("Добре дошъл в екипа","Имаш покана за BeautyFlow.",`<p style="color:#66565f;line-height:1.7">Здравей, <strong>${esc(x.name)}</strong>! Поканен/а си в екипа на <strong>${esc(x.salonName)}</strong>.</p><p style="color:#66565f;line-height:1.7">Задай парола чрез бутона по-долу, след което влез в BeautyFlow, за да управляваш своя профил и график.</p>`,{label:"Задай парола и влез",url:x.url})}}
+
+// ── Automatic "payment due" reminders (sent by /api/cron/subscription-reminders) ──
+type ReminderEmailInput={ownerName:string;businessName:string;planName:string;price:number;endDate:string;daysLeft:number;isTrial:boolean;iban:string;loginUrl:string};
+export function subscriptionReminderEmail(x:ReminderEmailInput){
+ const what=x.isTrial?"пробният период":"абонаментът";
+ const whatCap=x.isTrial?"Пробният период":"Абонаментът";
+ const when=x.daysLeft<=0?"днес":x.daysLeft===1?"утре":`след ${x.daysLeft} дни`;
+ const subject=x.daysLeft<=0?`BeautyFlow — ${what} на ${x.businessName} изтича днес`:x.daysLeft===1?`BeautyFlow — ${what} на ${x.businessName} изтича утре`:`BeautyFlow — предстои плащане за ${x.businessName} (${when})`;
+ const title=x.daysLeft<=0?`${whatCap} изтича днес`:x.daysLeft===1?`${whatCap} изтича утре`:"Предстои подновяване";
+ const lead=x.isTrial
+  ?`Пробният период на <strong>${esc(x.businessName)}</strong> в BeautyFlow изтича ${when} (<strong>${esc(x.endDate)}</strong>). За да продължите да приемате онлайн записвания без прекъсване, активирайте план <strong>${esc(x.planName)}</strong> с плащане по сметката по-долу.`
+  :`Абонаментът на <strong>${esc(x.businessName)}</strong> по план <strong>${esc(x.planName)}</strong> е активен до <strong>${esc(x.endDate)}</strong> и изтича ${when}. За да не спират онлайн записванията, преведете месечната сума по сметката по-долу.`;
+ const urgency=x.daysLeft<=1
+  ?`<p style="margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#fff4e5;border:1px solid #f3d19c;color:#7a4b00;line-height:1.6">След изтичането клиентите няма да могат да запазват часове онлайн, докато абонаментът не бъде подновен. Профилът, услугите и всички данни остават запазени.</p>`
+  :"";
+ const html=layout(title,`${whatCap} на ${x.businessName} изтича ${when}. Сума: ${x.price} €, IBAN: ${x.iban}.`,
+  `<p style="color:#66565f;line-height:1.7">Здравейте, <strong>${esc(x.ownerName)}</strong>,</p><p style="color:#66565f;line-height:1.7">${lead}</p>${urgency}${details([["Сума",`${x.price} € (план ${x.planName}, месечно)`],["IBAN",x.iban],["Основание",x.businessName],["Валиден до",x.endDate]])}<p style="color:#66565f;line-height:1.7">В основанието на превода напишете само името на салона: <strong>${esc(x.businessName)}</strong>. След като плащането постъпи, ще подновим абонамента и ще получите потвърждение по имейл.</p><p style="color:#8a7981;font-size:13px;line-height:1.6">Ако вече сте превели сумата — благодарим ви! Няма нужда да правите нищо повече.</p>`,
+  {label:"Към моя BeautyFlow панел",url:x.loginUrl});
+ const text=[`Здравейте, ${x.ownerName},`,"",`${whatCap} на ${x.businessName} в BeautyFlow изтича ${when} (${x.endDate}).`,`За да продължите без прекъсване, преведете ${x.price} € (план ${x.planName}, месечно):`,"",`IBAN: ${x.iban}`,`Основание: ${x.businessName}`,"","След като плащането постъпи, ще подновим абонамента и ще получите потвърждение по имейл.","Ако вече сте превели сумата — благодарим ви, няма нужда да правите нищо повече.","",x.loginUrl].join("\n");
+ return {subject,text,html};
+}
+export function subscriptionRemindersSummaryEmail(rows:{businessName:string;planName:string;price:number;endDate:string;daysLeft:number;sentTo:string;ok:boolean}[]){
+ const subject=`BeautyFlow — напомняния за плащане днес (${rows.length})`;
+ const list=rows.map(r=>`${r.ok?"✓":"✗"} ${r.businessName} · ${r.planName} · ${r.price} € · до ${r.endDate} (${r.daysLeft<=0?"днес":r.daysLeft===1?"утре":`${r.daysLeft} дни`}) → ${r.sentTo}`).join("\n");
+ const html=layout("Напомняния за плащане",`${rows.length} салона получиха напомняне днес.`,`<p style="color:#66565f;line-height:1.7">Днес BeautyFlow изпрати напомняне за предстоящо плащане до:</p>${rows.map(r=>details([["Салон",r.businessName],["План",`${r.planName} · ${r.price} €`],["Изтича",`${r.endDate} (${r.daysLeft<=0?"днес":r.daysLeft===1?"утре":`след ${r.daysLeft} дни`})`],["Изпратено до",`${r.sentTo}${r.ok?"":" — НЕ Е ИЗПРАТЕНО"}`]])).join("")}<p style="color:#8a7981;font-size:13px;line-height:1.6">Когато видите плащане с основание името на салона, подновете го от Owner панела → „Поднови +30 дни“.</p>`);
+ return {subject,text:`Напомняния за плащане днес:\n${list}`,html};
+}

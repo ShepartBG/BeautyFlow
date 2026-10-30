@@ -184,3 +184,25 @@ html body :is(h1, h2) { word-spacing: .05em; }
 .bf-calendar-actions .btn { width: 100%; justify-content: center; text-align: center; }
 .bf-calendar-hint { margin: 2px 0 0; font-size: 12.5px; opacity: .75; text-align: center; }
 @media (max-width: 420px) { .bf-calendar-actions { grid-template-columns: 1fr; } }
+
+/* ── Subscription "payment due" banner (admin panel, owner only) ── */
+.bf-sub-reminder {
+  display: flex; gap: 14px; align-items: flex-start; margin: 0 0 16px; padding: 16px 18px;
+  border-radius: 18px; border: 1px solid rgba(214, 158, 46, .45); border-left: 5px solid #d69e2e;
+  background: linear-gradient(135deg, rgba(255, 249, 235, .97), rgba(255, 243, 222, .95)); color: #2b2117;
+  box-shadow: 0 14px 34px rgba(40, 20, 10, .18);
+}
+.bf-sub-reminder.is-urgent { border-color: rgba(214, 90, 70, .5); border-left-color: #d6573f; background: linear-gradient(135deg, rgba(255, 244, 240, .97), rgba(255, 233, 226, .95)); }
+.bf-sub-reminder-icon { flex: none; width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; font-size: 21px; background: rgba(214, 158, 46, .18); }
+.bf-sub-reminder.is-urgent .bf-sub-reminder-icon { background: rgba(214, 87, 63, .15); }
+.bf-sub-reminder-body { min-width: 0; flex: 1; }
+.bf-sub-reminder-body > b { display: block; font-size: 16px; font-weight: 800; }
+.bf-sub-reminder-body > p { margin: 4px 0 10px; font-size: 14px; line-height: 1.5; color: #4d3f33; }
+.bf-sub-reminder dl { margin: 0; display: grid; gap: 6px; }
+.bf-sub-reminder dl > div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 14px; }
+.bf-sub-reminder dt { color: #7a6a5b; font-weight: 700; }
+.bf-sub-reminder dd { margin: 0; font-weight: 800; overflow-wrap: anywhere; }
+.bf-sub-iban { font-variant-numeric: tabular-nums; letter-spacing: .02em; user-select: all; }
+.bf-sub-reminder dd button { margin-left: 6px; padding: 4px 10px; border-radius: 9px; border: 1px solid rgba(43, 33, 23, .2); background: #fff; color: #2b2117; font-size: 12px; font-weight: 800; cursor: pointer; }
+.bf-sub-reminder small { display: block; margin-top: 10px; font-size: 12.5px; color: #7a6a5b; }
+@media (max-width: 560px) { .bf-sub-reminder { padding: 14px; gap: 11px; } .bf-sub-reminder dl > div { grid-template-columns: 1fr; gap: 0; } }

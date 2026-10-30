@@ -1123,6 +1123,54 @@ test("BeautyFlow — пълен системен тест", async ({ browser, ba
       await expect(sub).toContainText(/Остават (29|30) дни/);
       return "План Studio, валиден още 30 дни";
     });
+
+    // ── Automatic payment reminders (only this disposable salon: ?salonId=) ──
+    const cron = (query = "") => api.get(`/api/cron/subscription-reminders?salonId=${S.salonId}${query}`, { headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` } });
+    const endsBefore = (await db.from("salons").select("trial_ends_at,subscription_ends_at").eq("id", S.salonId).single()).data!;
+    const endInDays = (n: number) => new Date(Date.now() + n * 86400000).toISOString();
+    try {
+      await step("14.12", async () => {
+        await db.from("salons").update({ trial_ends_at: endInDays(5), subscription_ends_at: null }).eq("id", S.salonId);
+        const since = Date.now();
+        const r = await cron(); const j = await r.json();
+        expect(r.status(), JSON.stringify(j)).toBe(200);
+        expect(j.results[0]).toMatchObject({ stage: "day7", status: "sent" });
+        const m = await waitForEmail(inbox("owner"), new RegExp(`предстои плащане за ${BUSINESS}`), since);
+        const body = await recordEmailLinks(m.id);
+        const txt = body.text || body.html;
+        for (const t of ["BG08FINV91501017847366", `Основание: ${BUSINESS}`, "60 €", "Studio"]) expect(txt, t).toContain(t);
+        await db.from("salons").update({ trial_ends_at: endInDays(1) }).eq("id", S.salonId);
+        const since1 = Date.now();
+        const r1 = await (await cron()).json();
+        expect(r1.results[0]).toMatchObject({ stage: "day1", status: "sent" });
+        const m1 = await waitForEmail(inbox("owner"), new RegExp(`изтича утре`), since1);
+        return `„${m.subject}“ и „${m1.subject}“ — с IBAN, сума 60 € и основание „${BUSINESS}“`;
+      });
+      await step("14.13", async () => {
+        const again = await (await cron()).json();
+        expect(again.results[0].status).toBe("already-sent");
+        const dry = await (await cron("&dry=1")).json();
+        expect(dry.results[0].status).toBe("already-sent");
+        const noKey = await api.get(`/api/cron/subscription-reminders?salonId=${S.salonId}`);
+        expect(noKey.status()).toBe(401);
+        const { count } = await db.from("subscription_reminders").select("id", { count: "exact", head: true }).eq("salon_id", S.salonId);
+        expect(count).toBe(2);
+        return "Повторно пускане същия ден не праща нищо; без ключ → 401; записани 2 напомняния (7 и 1 ден)";
+      });
+      await step("14.14", async () => {
+        await ap.goto("/admin"); await settle(ap, 3000);
+        await ap.reload(); await settle(ap, 3000);
+        const banner = ap.getByTestId("subscription-reminder");
+        await expect(banner).toBeVisible({ timeout: 15_000 });
+        for (const t of ["BG08FINV91501017847366", BUSINESS, "60 €"]) await expect(banner).toContainText(t);
+        await expect(banner).toContainText(/утре/);
+        await st1.page.goto("/admin"); await settle(st1.page, 3000);
+        await expect(st1.page.getByTestId("subscription-reminder")).toHaveCount(0);
+        return "Собственикът вижда лентата с IBAN, сума и основание; служителите — не";
+      });
+    } finally {
+      await db.from("salons").update(endsBefore).eq("id", S.salonId);
+    }
     await step("12.10", async () => {
       const notes: string[] = [];
       const ownerCard = () => platform.page.locator(".request-card").filter({ hasText: inbox("owner") });
