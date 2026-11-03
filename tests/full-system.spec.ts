@@ -698,12 +698,13 @@ test("BeautyFlow — пълен системен тест", async ({ browser, ba
         const days = await monthAvailability(api, { salonId: S.salonId, serviceId: S.serviceA, month });
         const soon = Object.entries(days).filter(([d]) => d > today && d < addDays(today, 7));
         expect(soon.every(([, st]) => st !== "available"), "При 7 дни най-близките дни трябва да са затворени").toBe(true);
-        // dBook is 3–6 days ahead: inside the 7-day window, so it must be refused.
+        // A workday 2–4 days ahead is always inside the 7-day window (whatever weekday the test runs), so it must be refused.
+        const inWindow = nextWeekday(2, [1, 2, 3, 4, 5], [dOff]);
         const c = await bookingCode(api, S.salonId, inbox("rule7"));
-        const tooSoon = await apiBook(api, { salonId: S.salonId, serviceId: S.serviceA, date: dBook, startTime: "10:00", name: "Правило Тест", phone: phone(7), email: inbox("rule7"), verificationId: c.verificationId, code: c.code });
+        const tooSoon = await apiBook(api, { salonId: S.salonId, serviceId: S.serviceA, date: inWindow, startTime: "10:00", name: "Правило Тест", phone: phone(7), email: inbox("rule7"), verificationId: c.verificationId, code: c.code });
         expect(tooSoon.status, JSON.stringify(tooSoon.body)).toBe(409);
         expect(tooSoon.body.message).toMatch(/7 дни/);
-        note = `7 дни: близките дати са затворени и записване за ${dBook} е отказано („${tooSoon.body.message}“)`;
+        note = `7 дни: близките дати са затворени и записване за ${inWindow} е отказано („${tooSoon.body.message}“)`;
       } finally {
         await setNotice("180");
       }
@@ -841,7 +842,14 @@ test("BeautyFlow — пълен системен тест", async ({ browser, ba
     await step("7.13", async () => {
       await st1.page.goto("/admin/calendar"); await settle(st1.page);
       await chooseAdminDate(st1.page, dBook);
-      await expect(st1.page.locator(".calendar-appointment").filter({ hasText: cust1.name })).toBeVisible({ timeout: 15_000 });
+      const card = st1.page.locator(".calendar-appointment").filter({ hasText: cust1.name });
+      const seen = await card.waitFor({ state: "visible", timeout: 15_000 }).then(() => true).catch(() => false);
+      if (!seen) {
+        // Diagnose: where is the booking really, and which day does the calendar show?
+        const { data: a } = await db.from("appointments").select("appointment_date,start_time,staff_id,status").eq("id", bookedId).maybeSingle();
+        const shown = await st1.page.locator(".admin-date-trigger").first().innerText().catch(() => "?");
+        throw new Error(`Не се вижда. В базата: ${JSON.stringify(a)} (staff1=${S.staff1}); календарът показва „${shown.trim()}“`);
+      }
       return `Вижда се в календара на ${STAFF1}`;
     });
 
@@ -1069,6 +1077,151 @@ test("BeautyFlow — пълен системен тест", async ({ browser, ba
       await expect(ap.locator(".bf-waitlist-admin article").filter({ hasText: "Изтекла Заявка" })).toHaveCount(0);
       await expect.poll(async () => (await db.from("waitlist_entries").select("status").eq("id", ins.data!.id).single()).data!.status).toBe("cancelled");
       mark("10.09", "manual", "В админ панела няма бутон за ръчно премахване на заявка. Заявките се махат автоматично при записване (10.06) и когато периодът изтече (проверено).");
+    });
+
+    // ════════ 15. Manual booking by the salon ════════
+    console.log("\n▶ 15. Ръчно записване от салона");
+    const dManual = nextWeekday(15, [3]);
+    const mbCust = { name: "Ръчен Клиент", phone: phone() };
+    const manualApi = async (page: Page, data: Record<string, unknown>) => {
+      const t = await accessToken(page);
+      const r = await api.post("/api/business/manual-booking", { headers: { Authorization: `Bearer ${t}` }, data });
+      return { status: r.status(), body: await r.json() };
+    };
+    const manualFree = async (page: Page, staffId: string, date: string, serviceId = S.serviceA) => {
+      const t = await accessToken(page);
+      const r = await api.get(`/api/public/availability?${new URLSearchParams({ salonId: S.salonId, serviceId, staffId, date, manual: "1" })}`, { headers: { Authorization: `Bearer ${t}` } });
+      return freeTimes(await r.json());
+    };
+    let manualId = "", manualTime = "";
+    const sinceManual = Date.now();
+    await step("15.01", async () => {
+      for (const [ctx, who] of [[ap, "собственик"], [st1.page, "специалист"]] as const) {
+        await ctx.goto("/admin"); await settle(ctx, 2000);
+        await ctx.getByRole("button", { name: /Меню/ }).click();
+        await expect(ctx.locator(".admin-menu-popover a[href='/admin/new-booking']"), who).toBeVisible();
+        await ctx.keyboard.press("Escape").catch(() => {});
+      }
+      return "„Ново записване“ е в менюто и на собственика, и на специалиста";
+    });
+    await step("15.03", async () => {
+      const pub = freeTimes(await availability(api, { salonId: S.salonId, serviceId: S.serviceA, staffId: S.ownerStaff, date: dManual }));
+      const man = await manualFree(ap, S.ownerStaff, dManual);
+      expect(man).toEqual(pub);
+      expect(man.length).toBeGreaterThan(0);
+      return `${dManual}: ${man.length} свободни часа — еднакви с публичните`;
+    });
+    await step("15.02", async () => {
+      await ap.goto("/admin/new-booking"); await settle(ap, 2500);
+      await expect(ap.locator("#mb-name")).toHaveCount(0); // data fields appear only after a time is chosen
+      await expect(ap.locator('input[type="email"]')).toHaveCount(0);
+      await ap.locator("#mb-service").selectOption(S.serviceA);
+      await publicGotoMonth(ap, dManual);
+      await ap.locator(".booking-calendar-grid button.day-available").filter({ has: ap.locator("span", { hasText: new RegExp(`^${Number(dManual.slice(8))}$`) }) }).first().click();
+      const slot = ap.locator(".bf-manual-slots button").first();
+      await expect(slot).toBeVisible({ timeout: 15_000 });
+      manualTime = (await slot.innerText()).trim();
+      await slot.click();
+      await ap.locator("#mb-name").fill(mbCust.name);
+      await ap.locator("#mb-phone").fill(mbCust.phone);
+      await ap.locator("#mb-note").fill("Записан по телефона");
+      const resp = waitResp(ap, (r) => r.url().endsWith("/api/business/manual-booking"));
+      await ap.getByRole("button", { name: "Запиши часа" }).click();
+      const r = await resp; const j = await r.json();
+      expect(r.status(), j.message).toBe(200);
+      manualId = j.appointmentId;
+      const ok = ap.getByTestId("manual-booking-success");
+      await expect(ok).toBeVisible();
+      for (const t of ["Часът е запазен", mbCust.name, SERVICE_A, manualTime, OWNER_NAME]) await expect(ok).toContainText(t);
+      const { data: a } = await db.from("appointments").select("staff_id,source,customer_email,status").eq("id", manualId).single();
+      expect(a).toMatchObject({ staff_id: S.ownerStaff, source: "manual", customer_email: null, status: "confirmed" });
+      return `${dManual} ${manualTime} в графика на ${OWNER_NAME}, без имейл`;
+    }, { critical: true });
+    await step("15.06", async () => {
+      expect(freeTimes(await availability(api, { salonId: S.salonId, serviceId: S.serviceA, staffId: S.ownerStaff, date: dManual })), "Публично часът трябва да е зает").not.toContain(manualTime);
+      const twice = await manualApi(ap, { serviceId: S.serviceA, date: dManual, startTime: manualTime, customerName: "Втори Опит", customerPhone: phone() });
+      expect(twice.status).toBe(409);
+      const online = await bookWithCode(api, { salonId: S.salonId, serviceId: S.serviceA, staffId: S.ownerStaff, date: dManual, startTime: manualTime, name: "Онлайн Опит", phone: phone(), email: inbox("mbonline") });
+      expect(online.status).toBe(409);
+      return "Ръчно записаният час е зает и за повторно ръчно, и за онлайн записване";
+    });
+    await step("15.04", async () => {
+      await db.from("booking_settings").update({ min_notice_hours: 168 }).eq("salon_id", S.salonId);
+      try {
+        const soon = nextWeekday(2, [1, 2, 3, 4, 5], [dOff]);
+        expect(freeTimes(await availability(api, { salonId: S.salonId, serviceId: S.serviceA, staffId: S.ownerStaff, date: soon })), "Онлайн при 7 дни предизвестие").toEqual([]);
+        const man = await manualFree(ap, S.ownerStaff, soon);
+        expect(man.length, "Ръчно трябва да има часове").toBeGreaterThan(0);
+        return `При 7 дни предизвестие: онлайн ${soon} е затворен, ръчно има ${man.length} часа`;
+      } finally {
+        await db.from("booking_settings").update({ min_notice_hours: 3 }).eq("salon_id", S.salonId);
+      }
+    });
+    await step("15.05", async () => {
+      // Specialist 2 does not perform service B; specialist 1 books only into their own schedule.
+      await st2.page.goto("/admin/new-booking"); await settle(st2.page, 2500);
+      await expect(st2.page.locator(`#mb-service option[value="${S.serviceB}"]`)).toHaveCount(0);
+      const free1 = await manualFree(st1.page, S.staff1, dManual);
+      const r = await manualApi(st1.page, { serviceId: S.serviceA, date: dManual, startTime: free1[0], customerName: "Клиент на Мария", customerPhone: phone() });
+      expect(r.status, r.body.message).toBe(200);
+      const { data: a } = await db.from("appointments").select("staff_id").eq("id", r.body.appointmentId).single();
+      expect(a!.staff_id).toBe(S.staff1);
+      const ownerSlot = await manualApi(st1.page, { serviceId: S.serviceA, date: dManual, startTime: manualTime, customerName: "Опит в чужд", customerPhone: phone() });
+      const mine = (await manualFree(st1.page, S.staff1, dManual)).includes(manualTime);
+      if (!mine) expect(ownerSlot.status).toBe(409);
+      const wrongService = await manualApi(st2.page, { serviceId: S.serviceB, date: dManual, startTime: "10:00", customerName: "Грешна Услуга", customerPhone: phone() });
+      expect(wrongService.status).toBe(409);
+      return `${STAFF1} записва само в своя график; ${STAFF2} не вижда „${SERVICE_B}“`;
+    });
+    await step("15.07", async () => {
+      await db.from("salon_customers").update({ status: "blacklist" }).eq("salon_id", S.salonId).eq("phone_normalized", mbCust.phone);
+      const free = await manualFree(ap, S.ownerStaff, dManual);
+      const time = free[free.length - 1];
+      await ap.goto("/admin/new-booking"); await settle(ap, 2500);
+      await ap.locator("#mb-service").selectOption(S.serviceA);
+      await publicGotoMonth(ap, dManual);
+      await ap.locator(".booking-calendar-grid button.day-available").filter({ has: ap.locator("span", { hasText: new RegExp(`^${Number(dManual.slice(8))}$`) }) }).first().click();
+      await ap.locator(".bf-manual-slots button").filter({ hasText: time }).click();
+      await ap.locator("#mb-name").fill(mbCust.name);
+      await ap.locator("#mb-phone").fill(mbCust.phone);
+      await ap.getByRole("button", { name: "Запиши часа" }).click();
+      await expect(ap.locator(".bf-manual-warning")).toContainText("черния списък");
+      await ap.getByRole("button", { name: "Да, запиши го" }).click();
+      await expect(ap.getByTestId("manual-booking-success")).toBeVisible({ timeout: 15_000 });
+      const { data: c } = await db.from("salon_customers").select("status").eq("salon_id", S.salonId).eq("phone_normalized", mbCust.phone).single();
+      expect(c!.status, "Статусът в черния списък се запазва").toBe("blacklist");
+      await db.from("salon_customers").update({ status: "regular" }).eq("salon_id", S.salonId).eq("phone_normalized", mbCust.phone);
+      return "Показва се предупреждение; след „Да, запиши го“ часът е записан, а клиентът остава в черния списък";
+    });
+    await step("15.08", async () => {
+      await ap.goto("/admin/calendar"); await settle(ap);
+      await chooseAdminDate(ap, dManual);
+      await expect(ap.locator(".calendar-appointment").filter({ hasText: mbCust.name }).first()).toContainText("Записан от салона");
+      await ap.goto(`/admin/overview?date=${dManual}`); await settle(ap, 2000);
+      await expect(ap.locator(".booking-row").filter({ hasText: mbCust.name }).first()).toContainText("Записан от салона");
+      await ap.goto("/admin/customers"); await settle(ap, 2000);
+      await expect(ap.locator(".customer-card").filter({ hasText: mbCust.name })).toBeVisible();
+      await ap.goto("/admin"); await settle(ap, 2500);
+      await ap.locator(".admin-notify-btn").click();
+      await expect(ap.locator(".admin-notify-popover")).toContainText(mbCust.name, { timeout: 15_000 });
+      const [d, m] = [dManual.slice(8), dManual.slice(5, 7)];
+      const leaked = await waitForEmail(inbox("owner"), new RegExp(`Ново записване — ${d}\\.${m}`), sinceManual, 8_000).catch(() => null);
+      expect(leaked, "При ръчно записване не трябва да се праща имейл").toBeNull();
+      return "Вижда се навсякъде с „Записан от салона“; не е изпратен имейл";
+    });
+    await step("15.09", async () => {
+      const r = await api.post("/api/business/manual-booking", { data: { serviceId: S.serviceA, date: dManual, startTime: "11:00", customerName: "Без Вход", customerPhone: phone() } });
+      expect(r.status()).toBe(401);
+      // Without a signed-in salon member, manual=1 must change nothing (same as the public view).
+      await db.from("booking_settings").update({ min_notice_hours: 168 }).eq("salon_id", S.salonId);
+      try {
+        const soon = nextWeekday(2, [1, 2, 3, 4, 5], [dOff]);
+        const anon = await api.get(`/api/public/availability?${new URLSearchParams({ salonId: S.salonId, serviceId: S.serviceA, staffId: S.ownerStaff, date: soon, manual: "1" })}`);
+        expect(freeTimes(await anon.json())).toEqual([]);
+      } finally {
+        await db.from("booking_settings").update({ min_notice_hours: 3 }).eq("salon_id", S.salonId);
+      }
+      return "Без вход → 401; без вход ръчният режим не заобикаля правилата за онлайн клиенти";
     });
 
     // ════════ 11. Notifications ════════

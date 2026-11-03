@@ -206,3 +206,53 @@ html body :is(h1, h2) { word-spacing: .05em; }
 .bf-sub-reminder dd button { margin-left: 6px; padding: 4px 10px; border-radius: 9px; border: 1px solid rgba(43, 33, 23, .2); background: #fff; color: #2b2117; font-size: 12px; font-weight: 800; cursor: pointer; }
 .bf-sub-reminder small { display: block; margin-top: 10px; font-size: 12.5px; color: #7a6a5b; }
 @media (max-width: 560px) { .bf-sub-reminder { padding: 14px; gap: 11px; } .bf-sub-reminder dl > div { grid-template-columns: 1fr; gap: 0; } }
+
+/* ── Manual booking (admin → Ново записване) ── */
+.bf-manual-booking { max-width: 760px; }
+.bf-manual-form { display: grid; gap: 16px; }
+.bf-manual-form .booking-calendar { max-width: 520px; }
+.bf-manual-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.bf-manual-slots button { min-height: 44px; border-radius: 12px; cursor: pointer; }
+.bf-manual-slots button.selected { outline: 3px solid #b48cf0; outline-offset: 1px; transform: scale(1.04); }
+.bf-manual-summary { padding: 12px 14px; border-radius: 12px; background: rgba(155, 107, 242, .14); border: 1px solid rgba(180, 140, 240, .35); font-size: 14px; }
+.bf-manual-badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-style: normal; font-size: 11px; font-weight: 800; letter-spacing: .02em; color: #6b3fc7; background: rgba(155, 107, 242, .16); border: 1px solid rgba(155, 107, 242, .35); vertical-align: middle; }
+.bf-manual-modal { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 16px; background: rgba(12, 8, 18, .62); backdrop-filter: blur(4px); }
+.bf-manual-modal-card { width: min(440px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 26px 22px; border-radius: 24px; background: #fff; color: #231d2b; box-shadow: 0 30px 80px rgba(0, 0, 0, .45); text-align: center; }
+.bf-manual-modal-card h2 { margin: 10px 0 6px; color: #231d2b; }
+.bf-manual-modal-card p { color: #5e5466; }
+.bf-manual-modal-card dl { margin: 16px 0; display: grid; gap: 8px; text-align: left; }
+.bf-manual-modal-card dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; border-radius: 12px; background: #f6f2fa; }
+.bf-manual-modal-card dt { color: #7a6f84; font-weight: 700; }
+.bf-manual-modal-card dd { margin: 0; font-weight: 800; text-align: right; overflow-wrap: anywhere; }
+.bf-manual-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bf-manual-modal-actions .btn { width: 100%; justify-content: center; }
+.bf-manual-warning .booking-success-icon { background: #fde8e4; color: #c2412d; }
+@media (prefers-reduced-motion: no-preference) { .bf-manual-modal-card { animation: bfm-rise .45s cubic-bezier(.22, 1, .36, 1) both; } }
+/* Manual booking: the public calendar/slot styles assume dark text from the public booking card. */
+.bf-manual-booking .booking-calendar,
+.bf-manual-booking .booking-calendar button,
+.bf-manual-booking .booking-calendar strong,
+.bf-manual-booking .booking-calendar-week span { color: #2b2233 !important; }
+.bf-manual-booking .booking-calendar button[disabled] { color: #9a90a3 !important; }
+.bf-manual-booking .booking-calendar button.selected,
+.bf-manual-booking .booking-calendar button.selected span { color: #fff !important; }
+.bf-manual-slots button { color: #1f5a3a !important; font-weight: 800 !important; }
+.bf-manual-slots button b { color: inherit !important; }
+.bf-manual-slots button.selected { color: #fff !important; }
+.bf-manual-modal-card.booking-success h2 { color: #231d2b !important; display: block !important; opacity: 1 !important; font-size: 26px !important; }
+.bf-manual-modal-card.booking-success > p { color: #5e5466 !important; opacity: 1 !important; font-size: 15px !important; }
+/* The admin theme forces white text inside buttons; the manual calendar/slots sit on light tiles. */
+html body .dash-page .bf-manual-booking .booking-calendar-grid button,
+html body .dash-page .bf-manual-booking .booking-calendar-grid button span,
+html body .dash-page .bf-manual-booking .booking-calendar-grid button small { color: #2b2233 !important; -webkit-text-fill-color: #2b2233 !important; }
+html body .dash-page .bf-manual-booking .booking-calendar-grid button[disabled],
+html body .dash-page .bf-manual-booking .booking-calendar-grid button[disabled] span { color: #a197aa !important; -webkit-text-fill-color: #a197aa !important; }
+html body .dash-page .bf-manual-booking .booking-calendar-grid button.selected,
+html body .dash-page .bf-manual-booking .booking-calendar-grid button.selected span { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+html body .dash-page .bf-manual-booking .bf-manual-slots button,
+html body .dash-page .bf-manual-booking .bf-manual-slots button b { color: #1f5a3a !important; -webkit-text-fill-color: #1f5a3a !important; }
+html body .dash-page .bf-manual-booking .bf-manual-slots button.selected,
+html body .dash-page .bf-manual-booking .bf-manual-slots button.selected b { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+html body .dash-page .bf-manual-booking .booking-calendar-month-legend span,
+html body .dash-page .bf-manual-booking .booking-calendar-head strong,
+html body .dash-page .bf-manual-booking .calendar-hint { color: #3a3042 !important; -webkit-text-fill-color: #3a3042 !important; }
